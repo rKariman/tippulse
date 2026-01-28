@@ -275,12 +275,12 @@ export default function AdminSyncPage() {
                 <Label htmlFor="league" className="text-xs">
                   League (optional)
                 </Label>
-                <Select value={selectedLeague} onValueChange={setSelectedLeague}>
+                <Select value={selectedLeague || "all"} onValueChange={(val) => setSelectedLeague(val === "all" ? "" : val)}>
                   <SelectTrigger>
                     <SelectValue placeholder="All leagues" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All leagues</SelectItem>
+                    <SelectItem value="all">All leagues</SelectItem>
                     {leagues.map((league) => (
                       <SelectItem
                         key={league.id}

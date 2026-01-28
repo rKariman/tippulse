@@ -18,10 +18,10 @@ import {
 } from "@/lib/mockData";
 
 export default function HomePage() {
-  // Fetch real data
+  // Fetch real data - today's matches, limit 10
   const { data: realFixtures, isLoading: fixturesLoading } = useUpcomingFixtures({ 
-    limit: 4, 
-    dateRange: "upcoming" 
+    limit: 10, 
+    dateRange: "today" 
   });
   const { data: realLeagues } = useFeaturedLeagues();
   const { data: previews } = usePreviews();
@@ -48,28 +48,17 @@ export default function HomePage() {
     previewMap.set(p.fixture.id, p.slug);
   });
 
-  // Convert real fixtures to display format
-  const todayFixtures = hasRealFixtures
-    ? realFixtures.map((f) => ({
-        id: f.id,
-        homeTeam: f.home_team?.name || "TBD",
-        awayTeam: f.away_team?.name || "TBD",
-        kickoffAt: f.kickoff_at,
-        league: f.league?.name || "",
-        venue: f.venue,
-        slug: f.slug,
-        previewSlug: previewMap.get(f.id) || f.slug,
-      }))
-    : mockFixtures.slice(0, 4).map((f) => ({
-        id: f.id,
-        homeTeam: f.homeTeam.name,
-        awayTeam: f.awayTeam.name,
-        kickoffAt: f.kickoffAt,
-        league: f.league.name,
-        venue: f.venue,
-        slug: f.slug,
-        previewSlug: previewMap.get(f.id) || f.slug,
-      }));
+  // Convert real fixtures to display format - ONLY show real data, no mock fallback
+  const todayFixtures = (realFixtures || []).map((f) => ({
+    id: f.id,
+    homeTeam: f.home_team?.name || "TBD",
+    awayTeam: f.away_team?.name || "TBD",
+    kickoffAt: f.kickoff_at,
+    league: f.league?.name || "",
+    venue: f.venue,
+    slug: f.slug,
+    previewSlug: previewMap.get(f.id) || f.slug,
+  }));
 
   return (
     <Layout>
@@ -162,6 +151,11 @@ export default function HomePage() {
               {fixturesLoading ? (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="h-6 w-6 animate-spin text-brand-600" />
+                </div>
+              ) : todayFixtures.length === 0 ? (
+                <div className="text-center py-8 text-ink-500">
+                  <p>No matches found for today.</p>
+                  <p className="text-sm mt-1">Run sync from /admin/sync to fetch matches.</p>
                 </div>
               ) : (
                 <div className="space-y-3">

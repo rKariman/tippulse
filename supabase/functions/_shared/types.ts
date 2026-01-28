@@ -21,6 +21,8 @@ export interface Fixture {
   leagueExternalId: string;
   homeTeamExternalId: string;
   awayTeamExternalId: string;
+  homeTeamName?: string;
+  awayTeamName?: string;
   kickoffAt: string;
   venue?: string;
   status: 'scheduled' | 'in_play' | 'finished' | 'postponed' | 'cancelled';

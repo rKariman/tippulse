@@ -160,6 +160,13 @@ export function createApiFootballProvider(apiKey: string): MatchDataProvider {
       const { dateFrom, dateTo, leagueId } = params;
       const allFixtures: Fixture[] = [];
 
+      // Get current season (football season spans two years)
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      // If we're in the second half of the year (Aug-Dec), use current year
+      // If we're in the first half (Jan-Jul), use previous year
+      const season = now.getMonth() >= 7 ? currentYear : currentYear - 1;
+
       // API-Football requires fetching by single date, so we iterate
       const startDate = new Date(dateFrom);
       const endDate = new Date(dateTo);
@@ -167,7 +174,7 @@ export function createApiFootballProvider(apiKey: string): MatchDataProvider {
       for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
         const dateStr = d.toISOString().split('T')[0];
         
-        let url = `${API_FOOTBALL_BASE_URL}/fixtures?date=${dateStr}`;
+        let url = `${API_FOOTBALL_BASE_URL}/fixtures?date=${dateStr}&season=${season}`;
         if (leagueId) {
           url += `&league=${leagueId}`;
         }
@@ -186,6 +193,8 @@ export function createApiFootballProvider(apiKey: string): MatchDataProvider {
             leagueExternalId: String(m.league.id),
             homeTeamExternalId: String(m.teams.home.id),
             awayTeamExternalId: String(m.teams.away.id),
+            homeTeamName: m.teams.home.name,
+            awayTeamName: m.teams.away.name,
             kickoffAt: m.fixture.date,
             venue: m.fixture.venue?.name,
             status: mapStatus(m.fixture.status?.short || 'NS'),

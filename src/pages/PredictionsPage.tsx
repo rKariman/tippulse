@@ -17,7 +17,7 @@ export default function PredictionsPage() {
 
   // Fetch real data only with auto-refresh for live scores
   const { data: realLeagues, isLoading: leaguesLoading } = useLeagues();
-  const { data: fixtureGroups, isLoading: fixturesLoading, refetch } = useFixturesByLeague(leagueFilter);
+  const { data: fixtureGroups, isLoading: fixturesLoading, refetch } = useFixturesByLeague(leagueFilter, dateFilter);
   const { data: upcomingFixtures } = useUpcomingFixtures({ limit: 4, dateRange: dateFilter });
   const { data: previews } = usePreviews();
   

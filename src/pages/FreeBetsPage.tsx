@@ -1,9 +1,36 @@
 import { Layout } from "@/components/layout/Layout";
 import { OfferCard } from "@/components/cards/OfferCard";
 import { NewsletterWidget } from "@/components/widgets/NewsletterWidget";
-import { mockOffers } from "@/lib/mockData";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Loader2 } from "lucide-react";
+
+interface FreeBet {
+  id: string;
+  title: string;
+  slug: string;
+  bookmaker: string | null;
+  description: string;
+  terms: string | null;
+  target_url: string;
+  is_featured: boolean;
+}
 
 export default function FreeBetsPage() {
+  const { data: freeBets, isLoading, error } = useQuery({
+    queryKey: ["free_bets", "published"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("free_bets")
+        .select("id, title, slug, bookmaker, description, terms, target_url, is_featured")
+        .eq("published", true)
+        .order("is_featured", { ascending: false })
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as FreeBet[];
+    },
+  });
+
   return (
     <Layout>
       <div className="container py-6">
@@ -34,19 +61,35 @@ export default function FreeBetsPage() {
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Main content */}
           <div className="lg:col-span-2 space-y-6">
-            <div className="grid sm:grid-cols-2 gap-4">
-              {mockOffers.map((offer) => (
-                <OfferCard
-                  key={offer.id}
-                  id={offer.id}
-                  title={offer.title}
-                  description={offer.description}
-                  bookmaker={offer.bookmaker}
-                  targetUrl={offer.targetUrl}
-                  slug={offer.slug}
-                />
-              ))}
-            </div>
+            {isLoading ? (
+              <div className="text-center py-12">
+                <Loader2 size={32} className="animate-spin text-brand-600 mx-auto mb-3" />
+                <p className="text-ink-500">Loading offers...</p>
+              </div>
+            ) : error ? (
+              <div className="text-center py-12 bg-surface border border-ink-200 rounded-xl">
+                <p className="text-ink-500">Failed to load offers. Please try again later.</p>
+              </div>
+            ) : freeBets && freeBets.length > 0 ? (
+              <div className="grid sm:grid-cols-2 gap-4">
+                {freeBets.map((offer) => (
+                  <OfferCard
+                    key={offer.id}
+                    id={offer.id}
+                    title={offer.title}
+                    description={offer.description}
+                    bookmaker={{ name: offer.bookmaker || "Bookmaker" }}
+                    targetUrl={offer.target_url}
+                    slug={offer.slug}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 bg-surface border border-ink-200 rounded-xl">
+                <p className="text-ink-500">No offers available at the moment.</p>
+                <p className="text-sm text-ink-400 mt-1">Check back later for new promotions.</p>
+              </div>
+            )}
 
             {/* Additional info */}
             <div className="card-base p-6">

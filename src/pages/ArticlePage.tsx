@@ -1,14 +1,65 @@
 import { useParams, Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { NewsletterWidget } from "@/components/widgets/NewsletterWidget";
-import { mockArticles } from "@/lib/mockData";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Loader2 } from "lucide-react";
+
+interface NewsPost {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  content: string;
+  cover_image_url: string | null;
+  created_at: string;
+}
 
 export default function ArticlePage() {
   const { slug } = useParams<{ slug: string }>();
 
-  const article = mockArticles.find((a) => a.slug === slug);
+  const { data: article, isLoading, error } = useQuery({
+    queryKey: ["news_posts", slug],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("news_posts")
+        .select("*")
+        .eq("slug", slug)
+        .eq("published", true)
+        .maybeSingle();
+      if (error) throw error;
+      return data as NewsPost | null;
+    },
+    enabled: !!slug,
+  });
 
-  if (!article) {
+  const { data: relatedArticles } = useQuery({
+    queryKey: ["news_posts", "related", slug],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("news_posts")
+        .select("id, title, slug, created_at")
+        .eq("published", true)
+        .neq("slug", slug)
+        .order("created_at", { ascending: false })
+        .limit(4);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!slug,
+  });
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="container py-12 flex justify-center">
+          <Loader2 size={32} className="animate-spin text-brand-600" />
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error || !article) {
     return (
       <Layout>
         <div className="container py-12 text-center">
@@ -22,7 +73,7 @@ export default function ArticlePage() {
     );
   }
 
-  const publishDate = new Date(article.publishedAt).toLocaleDateString("en-GB", {
+  const publishDate = new Date(article.created_at).toLocaleDateString("en-GB", {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -39,7 +90,7 @@ export default function ArticlePage() {
               {/* Header */}
               <header className="mb-6">
                 <div className="flex items-center gap-2 mb-3">
-                  <span className="badge-brand capitalize">{article.article_type}</span>
+                  <span className="badge-brand">News</span>
                   <span className="text-sm text-ink-400">{publishDate}</span>
                 </div>
                 <h1 className="text-2xl md:text-3xl font-bold text-ink-900 mb-4">
@@ -50,26 +101,22 @@ export default function ArticlePage() {
                 )}
               </header>
 
+              {/* Cover image */}
+              {article.cover_image_url && (
+                <div className="mb-6">
+                  <img
+                    src={article.cover_image_url}
+                    alt={article.title}
+                    className="w-full rounded-lg"
+                  />
+                </div>
+              )}
+
               {/* Body */}
               <div className="prose prose-ink max-w-none">
-                <p className="text-ink-700 leading-relaxed">
-                  {article.body || "Full article content coming soon. Check back for the complete story."}
-                </p>
-
-                {/* Placeholder content for demo */}
-                <h2 className="text-xl font-bold text-ink-900 mt-8 mb-4">Key Highlights</h2>
-                <ul className="list-disc list-inside space-y-2 text-ink-700">
-                  <li>Expert analysis from our team of professional tipsters</li>
-                  <li>In-depth statistics and form guides</li>
-                  <li>Value picks with competitive odds</li>
-                  <li>Responsible gambling guidance</li>
-                </ul>
-
-                <h2 className="text-xl font-bold text-ink-900 mt-8 mb-4">Our Verdict</h2>
-                <p className="text-ink-700 leading-relaxed">
-                  Based on our comprehensive analysis, we believe this selection offers excellent value. 
-                  As always, please remember to bet responsibly and only stake what you can afford to lose.
-                </p>
+                <div className="text-ink-700 leading-relaxed whitespace-pre-wrap">
+                  {article.content}
+                </div>
               </div>
 
               {/* Share / Actions */}
@@ -91,13 +138,11 @@ export default function ArticlePage() {
             <NewsletterWidget />
 
             {/* Related Articles */}
-            <div className="card-base overflow-hidden">
-              <div className="widget-header">Related Articles</div>
-              <div className="divide-y divide-ink-100">
-                {mockArticles
-                  .filter((a) => a.id !== article.id)
-                  .slice(0, 4)
-                  .map((related) => (
+            {relatedArticles && relatedArticles.length > 0 && (
+              <div className="card-base overflow-hidden">
+                <div className="widget-header">Related Articles</div>
+                <div className="divide-y divide-ink-100">
+                  {relatedArticles.map((related) => (
                     <Link
                       key={related.id}
                       to={`/news/${related.slug}`}
@@ -106,13 +151,14 @@ export default function ArticlePage() {
                       <p className="text-sm font-medium text-ink-900 line-clamp-2">
                         {related.title}
                       </p>
-                      <span className="text-xs text-ink-400 mt-1 block capitalize">
-                        {related.article_type}
+                      <span className="text-xs text-ink-400 mt-1 block">
+                        {new Date(related.created_at).toLocaleDateString("en-GB")}
                       </span>
                     </Link>
                   ))}
+                </div>
               </div>
-            </div>
+            )}
           </aside>
         </div>
       </div>

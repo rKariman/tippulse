@@ -14,6 +14,21 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_users: {
+        Row: {
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ai_tips_cache: {
         Row: {
           confidence: string
@@ -194,6 +209,57 @@ export type Database = {
           },
         ]
       }
+      free_bets: {
+        Row: {
+          bookmaker: string | null
+          created_at: string
+          description: string
+          id: string
+          is_featured: boolean
+          published: boolean
+          region: string | null
+          slug: string
+          target_url: string
+          terms: string | null
+          title: string
+          updated_at: string
+          valid_from: string | null
+          valid_to: string | null
+        }
+        Insert: {
+          bookmaker?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          is_featured?: boolean
+          published?: boolean
+          region?: string | null
+          slug: string
+          target_url: string
+          terms?: string | null
+          title: string
+          updated_at?: string
+          valid_from?: string | null
+          valid_to?: string | null
+        }
+        Update: {
+          bookmaker?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          is_featured?: boolean
+          published?: boolean
+          region?: string | null
+          slug?: string
+          target_url?: string
+          terms?: string | null
+          title?: string
+          updated_at?: string
+          valid_from?: string | null
+          valid_to?: string | null
+        }
+        Relationships: []
+      }
       leagues: {
         Row: {
           country: string | null
@@ -230,6 +296,42 @@ export type Database = {
           provider?: string | null
           slug?: string
           sport?: string | null
+        }
+        Relationships: []
+      }
+      news_posts: {
+        Row: {
+          content: string
+          cover_image_url: string | null
+          created_at: string
+          excerpt: string | null
+          id: string
+          published: boolean
+          slug: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          cover_image_url?: string | null
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          published?: boolean
+          slug: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          cover_image_url?: string | null
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          published?: boolean
+          slug?: string
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -555,7 +657,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_admin: { Args: { check_user_id?: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never

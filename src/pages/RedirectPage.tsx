@@ -1,0 +1,71 @@
+import { useParams, useSearchParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { mockOffers } from "@/lib/mockData";
+
+export default function RedirectPage() {
+  const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    async function handleRedirect() {
+      if (!id) {
+        setError(true);
+        return;
+      }
+
+      // Find the offer by slug
+      const offer = mockOffers.find((o) => o.slug === id);
+
+      if (!offer) {
+        setError(true);
+        return;
+      }
+
+      try {
+        // Log the click
+        await supabase.from("outbound_clicks").insert({
+          route: searchParams.get("from") || document.referrer,
+          offer_slug: offer.slug,
+          bookmaker_slug: offer.bookmaker.slug,
+          target_url: offer.targetUrl,
+          referrer: document.referrer,
+          user_agent: navigator.userAgent,
+          // Note: IP hashing should be done server-side in production
+        });
+      } catch (err) {
+        console.error("Failed to log click:", err);
+        // Continue with redirect even if logging fails
+      }
+
+      // Redirect to target URL
+      window.location.href = offer.targetUrl;
+    }
+
+    handleRedirect();
+  }, [id, searchParams]);
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-ink-50">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-ink-900 mb-2">Offer Not Found</h1>
+          <p className="text-ink-500 mb-4">The offer you're looking for doesn't exist or has expired.</p>
+          <a href="/free-bets" className="btn-primary">
+            View All Offers
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-ink-50">
+      <div className="text-center">
+        <div className="animate-spin w-8 h-8 border-4 border-brand-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+        <p className="text-ink-500">Redirecting to offer...</p>
+      </div>
+    </div>
+  );
+}

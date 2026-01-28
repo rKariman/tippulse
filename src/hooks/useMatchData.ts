@@ -80,6 +80,50 @@ export function useFeaturedLeagues() {
   });
 }
 
+// Helper to get date boundaries in Europe/Rome timezone
+function getRomeDateBoundaries() {
+  // Get current time formatted as Europe/Rome
+  const now = new Date();
+  const romeFormatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Rome',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+  const romeDateStr = romeFormatter.format(now); // YYYY-MM-DD in Rome
+  
+  // Create date boundaries at midnight Rome time
+  // Rome is UTC+1 (winter) or UTC+2 (summer)
+  const todayRome = new Date(`${romeDateStr}T00:00:00+01:00`);
+  
+  // Adjust for DST - check if we're in summer time
+  const jan = new Date(now.getFullYear(), 0, 1);
+  const jul = new Date(now.getFullYear(), 6, 1);
+  const stdOffset = Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset());
+  const romeNow = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Rome' }));
+  const isDST = romeNow.getTimezoneOffset() < stdOffset;
+  
+  // Use correct offset
+  const offset = isDST ? '+02:00' : '+01:00';
+  const todayStart = new Date(`${romeDateStr}T00:00:00${offset}`);
+  
+  const tomorrowDate = new Date(todayStart);
+  tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+  
+  const day2 = new Date(todayStart);
+  day2.setDate(day2.getDate() + 2);
+  
+  const day8 = new Date(todayStart);
+  day8.setDate(day8.getDate() + 8);
+  
+  return {
+    todayStart: todayStart.toISOString(),
+    tomorrowStart: tomorrowDate.toISOString(),
+    day2Start: day2.toISOString(),
+    day8Start: day8.toISOString(),
+  };
+}
+
 export function useUpcomingFixtures(options?: {
   leagueSlug?: string | null;
   limit?: number;
@@ -90,14 +134,7 @@ export function useUpcomingFixtures(options?: {
   return useQuery({
     queryKey: ["fixtures", "upcoming", leagueSlug, dateRange, limit],
     queryFn: async () => {
-      const now = new Date();
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      const dayAfterTomorrow = new Date(today);
-      dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
-      const nextWeek = new Date(today);
-      nextWeek.setDate(nextWeek.getDate() + 7);
+      const { todayStart, tomorrowStart, day2Start, day8Start } = getRomeDateBoundaries();
 
       let query = supabase
         .from("fixtures")
@@ -121,19 +158,22 @@ export function useUpcomingFixtures(options?: {
         .order("kickoff_at", { ascending: true })
         .limit(limit);
 
-      // Date filtering
+      // Date filtering based on Europe/Rome timezone
       if (dateRange === "today") {
+        // Today: [todayStart, tomorrowStart)
         query = query
-          .gte("kickoff_at", today.toISOString())
-          .lt("kickoff_at", tomorrow.toISOString());
+          .gte("kickoff_at", todayStart)
+          .lt("kickoff_at", tomorrowStart);
       } else if (dateRange === "tomorrow") {
+        // Tomorrow: [tomorrowStart, day2Start)
         query = query
-          .gte("kickoff_at", tomorrow.toISOString())
-          .lt("kickoff_at", dayAfterTomorrow.toISOString());
+          .gte("kickoff_at", tomorrowStart)
+          .lt("kickoff_at", day2Start);
       } else {
+        // Upcoming: [day2Start, day8Start) - days 2-7, excluding today and tomorrow
         query = query
-          .gte("kickoff_at", today.toISOString())
-          .lt("kickoff_at", nextWeek.toISOString());
+          .gte("kickoff_at", day2Start)
+          .lt("kickoff_at", day8Start);
       }
 
       // League filtering (if leagueSlug is provided)
@@ -158,14 +198,26 @@ export function useUpcomingFixtures(options?: {
   });
 }
 
-export function useFixturesByLeague(leagueSlug?: string | null) {
+export function useFixturesByLeague(leagueSlug?: string | null, dateRange?: "today" | "tomorrow" | "upcoming") {
   return useQuery({
-    queryKey: ["fixtures", "by-league", leagueSlug],
+    queryKey: ["fixtures", "by-league", leagueSlug, dateRange],
     queryFn: async () => {
-      const now = new Date();
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const nextWeek = new Date(today);
-      nextWeek.setDate(nextWeek.getDate() + 7);
+      const { todayStart, tomorrowStart, day2Start, day8Start } = getRomeDateBoundaries();
+
+      let startDate: string;
+      let endDate: string;
+
+      if (dateRange === "today") {
+        startDate = todayStart;
+        endDate = tomorrowStart;
+      } else if (dateRange === "tomorrow") {
+        startDate = tomorrowStart;
+        endDate = day2Start;
+      } else {
+        // upcoming: days 2-7
+        startDate = day2Start;
+        endDate = day8Start;
+      }
 
       let query = supabase
         .from("fixtures")
@@ -184,8 +236,8 @@ export function useFixturesByLeague(leagueSlug?: string | null) {
           away_team:teams!fixtures_away_team_id_fkey(id, name, slug),
           league:leagues!fixtures_league_id_fkey(id, name, slug)
         `)
-        .gte("kickoff_at", today.toISOString())
-        .lt("kickoff_at", nextWeek.toISOString())
+        .gte("kickoff_at", startDate)
+        .lt("kickoff_at", endDate)
         .order("kickoff_at", { ascending: true });
 
       if (leagueSlug) {

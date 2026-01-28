@@ -5,7 +5,7 @@ import { createApiFootballProvider } from '../_shared/api-football-provider.ts';
 import { logSyncRun } from '../_shared/upsert.ts';
 import type { SyncResult } from '../_shared/types.ts';
 
-function getTodayInRome(): string {
+function getDateRangeInRome(): { dateFrom: string; dateTo: string } {
   const now = new Date();
   const romeFormatter = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Europe/Rome',
@@ -13,7 +13,15 @@ function getTodayInRome(): string {
     month: '2-digit',
     day: '2-digit',
   });
-  return romeFormatter.format(now);
+  
+  const dateFrom = romeFormatter.format(now);
+  
+  // Add 7 days for the end date
+  const endDate = new Date(now);
+  endDate.setDate(endDate.getDate() + 7);
+  const dateTo = romeFormatter.format(endDate);
+  
+  return { dateFrom, dateTo };
 }
 
 function createSlug(name: string): string {
@@ -68,15 +76,15 @@ Deno.serve(async (req) => {
       upsertedFixtures: 0,
     };
 
-    const todayRome = getTodayInRome();
-    console.log(`Fetching fixtures for today (Rome): ${todayRome}`);
+    const { dateFrom, dateTo } = getDateRangeInRome();
+    console.log(`Fetching fixtures from ${dateFrom} to ${dateTo} (Rome timezone)`);
 
-    // Fetch fixtures for each allowed league
+    // Fetch fixtures for each allowed league for the next 7 days
     let allFixtures: any[] = [];
     for (const leagueId of ALLOWED_LEAGUE_IDS) {
       const fixtures = await provider.getFixturesByDateRange({
-        dateFrom: todayRome,
-        dateTo: todayRome,
+        dateFrom,
+        dateTo,
         leagueId,
       });
       allFixtures = allFixtures.concat(fixtures);
@@ -84,12 +92,12 @@ Deno.serve(async (req) => {
       await new Promise(resolve => setTimeout(resolve, 200));
     }
 
-    console.log(`API returned ${allFixtures.length} fixtures for allowed leagues on ${todayRome}`);
+    console.log(`API returned ${allFixtures.length} fixtures for allowed leagues from ${dateFrom} to ${dateTo}`);
 
     if (allFixtures.length === 0) {
-      await logSyncRun(supabase, 'today', provider.providerName, { date: todayRome }, result);
+      await logSyncRun(supabase, 'today', provider.providerName, { dateFrom, dateTo }, result);
       return new Response(
-        JSON.stringify({ ...result, message: 'No fixtures found for today' }),
+        JSON.stringify({ ...result, message: 'No fixtures found for the next 7 days' }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -286,7 +294,7 @@ Deno.serve(async (req) => {
 
     console.log(`Sync complete: ${result.upsertedLeagues} leagues, ${result.upsertedTeams} teams, ${result.upsertedFixtures} fixtures`);
 
-    await logSyncRun(supabase, 'today', provider.providerName, { date: todayRome, fixturesFromApi: allFixtures.length }, result);
+    await logSyncRun(supabase, 'today', provider.providerName, { dateFrom, dateTo, fixturesFromApi: allFixtures.length }, result);
 
     return new Response(
       JSON.stringify(result),

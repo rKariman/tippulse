@@ -1,11 +1,8 @@
 import { useParams } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
-import { TipCard } from "@/components/cards/TipCard";
 import { NewsletterWidget } from "@/components/widgets/NewsletterWidget";
-import { DateTabs } from "@/components/widgets/DateTabs";
-import { LeagueFilter } from "@/components/widgets/LeagueFilter";
-import { useState } from "react";
-import { mockTips, mockLeagues, mockPreviews } from "@/lib/mockData";
+import { useTodayFixturesForTips, useGenerateAITips, TipFixture, AITip } from "@/hooks/useTodayTips";
+import { Loader2, AlertTriangle, TrendingUp, Clock, Trophy } from "lucide-react";
 
 const marketLabels: Record<string, string> = {
   "bet-of-the-day": "Bet of the Day",
@@ -16,19 +13,105 @@ const marketLabels: Record<string, string> = {
   "double-chance": "Double Chance",
 };
 
+function ConfidenceBadge({ confidence }: { confidence: AITip["confidence"] }) {
+  const colors = {
+    Low: "bg-warning-100 text-warning-700 border-warning-200",
+    Medium: "bg-brand-100 text-brand-700 border-brand-200",
+    High: "bg-success-100 text-success-700 border-success-200",
+  };
+
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded border ${colors[confidence]}`}>
+      {confidence} Confidence
+    </span>
+  );
+}
+
+function TipMatchCard({ fixture, tip }: { fixture: TipFixture; tip?: AITip }) {
+  const kickoffTime = new Date(fixture.kickoff_at).toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  const kickoffDate = new Date(fixture.kickoff_at).toLocaleDateString("en-GB", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  });
+
+  return (
+    <div className="card-base overflow-hidden">
+      {/* Header with league */}
+      <div className="bg-brand-800 text-white px-4 py-2 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Trophy size={14} />
+          <span className="text-sm font-medium">{fixture.league?.name || "Unknown League"}</span>
+        </div>
+        <div className="flex items-center gap-2 text-xs text-brand-200">
+          <Clock size={12} />
+          <span>{kickoffDate} • {kickoffTime}</span>
+        </div>
+      </div>
+
+      {/* Match info */}
+      <div className="p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex-1">
+            <div className="font-semibold text-ink-900 text-lg">
+              {fixture.home_team?.name || "Home Team"}
+            </div>
+            <div className="text-ink-500 text-sm">vs</div>
+            <div className="font-semibold text-ink-900 text-lg">
+              {fixture.away_team?.name || "Away Team"}
+            </div>
+          </div>
+          {fixture.venue && (
+            <div className="text-xs text-ink-400 text-right max-w-[120px]">
+              {fixture.venue}
+            </div>
+          )}
+        </div>
+
+        {/* AI Tip */}
+        {tip ? (
+          <div className="bg-ink-50 border border-ink-200 rounded-lg p-3 mt-3">
+            <div className="flex items-start justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <TrendingUp size={16} className="text-brand-600" />
+                <span className="font-semibold text-ink-800 text-sm">AI Tip</span>
+              </div>
+              <ConfidenceBadge confidence={tip.confidence} />
+            </div>
+            
+            <div className="mb-2">
+              <span className="inline-block bg-brand-600 text-white px-2 py-1 rounded text-sm font-medium">
+                {tip.prediction}
+              </span>
+              <span className="ml-2 text-xs text-ink-500">({tip.market})</span>
+            </div>
+            
+            <p className="text-sm text-ink-600 leading-relaxed">
+              {tip.reasoning}
+            </p>
+          </div>
+        ) : (
+          <div className="bg-ink-50 border border-ink-200 rounded-lg p-3 mt-3 animate-pulse">
+            <div className="h-4 bg-ink-200 rounded w-1/3 mb-2"></div>
+            <div className="h-3 bg-ink-200 rounded w-full mb-1"></div>
+            <div className="h-3 bg-ink-200 rounded w-2/3"></div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function TipsPage() {
   const { market = "bet-of-the-day" } = useParams<{ market: string }>();
-  const [dateFilter, setDateFilter] = useState<"today" | "tomorrow" | "upcoming">("today");
-  const [leagueFilter, setLeagueFilter] = useState<string | null>(null);
-
   const marketTitle = marketLabels[market] || "Football Tips";
-  
-  // Filter tips by market
-  const filteredTips = mockTips.filter((tip) => {
-    if (market !== "bet-of-the-day" && tip.market !== market) return false;
-    if (leagueFilter && tip.fixture.league.slug !== leagueFilter) return false;
-    return true;
-  });
+
+  const { data: fixtures, isLoading: fixturesLoading, error: fixturesError } = useTodayFixturesForTips();
+  const { tips, isLoading: tipsLoading } = useGenerateAITips(fixtures);
 
   return (
     <Layout>
@@ -37,57 +120,69 @@ export default function TipsPage() {
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-ink-900 mb-2">{marketTitle}</h1>
           <p className="text-ink-500 text-sm max-w-2xl">
-            Check in for the best free football betting tips for today's matches. Our football tips are made by industry experts, giving you the inside scoop on all the big matches.
+            Today's top 20 football matches with AI-powered betting insights. Our algorithm analyzes league strength and match context to provide tips.
           </p>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Main content */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Filters */}
-            <div className="space-y-4">
-              <DateTabs selected={dateFilter} onChange={setDateFilter} />
-              <LeagueFilter
-                leagues={mockLeagues}
-                selected={leagueFilter}
-                onChange={setLeagueFilter}
-              />
+          <div className="lg:col-span-2 space-y-4">
+            {/* Disclaimer banner */}
+            <div className="bg-warning-50 border border-warning-200 rounded-lg p-4 flex items-start gap-3">
+              <AlertTriangle size={20} className="text-warning-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm text-warning-800 font-medium">
+                  AI-generated opinions, not guaranteed. Bet responsibly. 18+
+                </p>
+                <p className="text-xs text-warning-600 mt-1">
+                  Tips are based on general analysis and league characteristics. Always gamble responsibly.
+                </p>
+              </div>
             </div>
 
-            {/* Tips list */}
-            {filteredTips.length > 0 ? (
-              <div className="space-y-4">
-                {filteredTips.map((tip) => (
-                  <TipCard
-                    key={tip.id}
-                    id={tip.id}
-                    title={tip.title}
-                    fixture={{
-                      homeTeam: tip.fixture.homeTeam.name,
-                      awayTeam: tip.fixture.awayTeam.name,
-                      kickoffAt: tip.fixture.kickoffAt,
-                      league: tip.fixture.league.name,
-                    }}
-                    selection={tip.selection}
-                    odds={tip.odds}
-                    stars={tip.stars}
-                    reasoningShort={tip.reasoningShort}
-                    reasoningLong={tip.reasoningLong}
-                    previewSlug={mockPreviews.find((p) => p.fixture.id === tip.fixture.id)?.slug}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12 bg-surface border border-ink-200 rounded-xl">
-                <p className="text-ink-500">No tips available for this selection.</p>
-                <p className="text-sm text-ink-400 mt-1">Try changing the filters or check back later.</p>
+            {/* Loading state */}
+            {fixturesLoading && (
+              <div className="text-center py-12">
+                <Loader2 size={32} className="animate-spin text-brand-600 mx-auto mb-3" />
+                <p className="text-ink-500">Loading today's matches...</p>
               </div>
             )}
 
-            {/* Load more */}
-            {filteredTips.length > 0 && (
-              <div className="text-center">
-                <button className="btn-secondary">Load More Tips</button>
+            {/* Error state */}
+            {fixturesError && (
+              <div className="text-center py-12 bg-surface border border-ink-200 rounded-xl">
+                <AlertTriangle size={32} className="text-warning-500 mx-auto mb-3" />
+                <p className="text-ink-600 font-medium">Failed to load matches</p>
+                <p className="text-sm text-ink-400 mt-1">Please try again later.</p>
+              </div>
+            )}
+
+            {/* No matches */}
+            {!fixturesLoading && !fixturesError && (!fixtures || fixtures.length === 0) && (
+              <div className="text-center py-12 bg-surface border border-ink-200 rounded-xl">
+                <Trophy size={32} className="text-ink-300 mx-auto mb-3" />
+                <p className="text-ink-500">No matches scheduled for today.</p>
+                <p className="text-sm text-ink-400 mt-1">Check back later for upcoming fixtures.</p>
+              </div>
+            )}
+
+            {/* Matches list */}
+            {fixtures && fixtures.length > 0 && (
+              <div className="space-y-4">
+                {tipsLoading && (
+                  <div className="flex items-center gap-2 text-sm text-brand-600 mb-2">
+                    <Loader2 size={16} className="animate-spin" />
+                    <span>Generating AI tips...</span>
+                  </div>
+                )}
+                
+                {fixtures.map((fixture) => (
+                  <TipMatchCard
+                    key={fixture.id}
+                    fixture={fixture}
+                    tip={tips[fixture.id]}
+                  />
+                ))}
               </div>
             )}
           </div>
@@ -116,23 +211,18 @@ export default function TipsPage() {
               </div>
             </div>
 
-            {/* Top Leagues */}
+            {/* Responsible gambling notice */}
             <div className="card-base overflow-hidden">
-              <div className="widget-header">Top Leagues</div>
-              <div className="p-4 space-y-2">
-                {mockLeagues.slice(0, 5).map((league) => (
-                  <button
-                    key={league.id}
-                    onClick={() => setLeagueFilter(leagueFilter === league.slug ? null : league.slug)}
-                    className={`block w-full text-left py-2 px-3 text-sm rounded-lg transition-colors ${
-                      leagueFilter === league.slug
-                        ? "bg-brand-50 text-brand-700 font-medium"
-                        : "text-ink-700 hover:bg-ink-50"
-                    }`}
-                  >
-                    {league.name}
-                  </button>
-                ))}
+              <div className="widget-header">Responsible Gambling</div>
+              <div className="p-4 text-sm text-ink-600 space-y-2">
+                <p>🔞 18+ Only</p>
+                <p>Gambling can be addictive. Please play responsibly.</p>
+                <p className="text-xs text-ink-400">
+                  If you feel you may have a gambling problem, visit{" "}
+                  <a href="https://www.begambleaware.org" target="_blank" rel="noopener noreferrer" className="link-brand">
+                    BeGambleAware.org
+                  </a>
+                </p>
               </div>
             </div>
           </aside>

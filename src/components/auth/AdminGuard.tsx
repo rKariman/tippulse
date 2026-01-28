@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2, ShieldX } from "lucide-react";
@@ -9,9 +9,28 @@ interface AdminGuardProps {
 }
 
 export function AdminGuard({ children }: AdminGuardProps) {
-  const { user, isAdmin, isLoading } = useAuth();
+  const { user, isAdmin, isLoading, checkAdminStatus } = useAuth();
+  const [isCheckingAdmin, setIsCheckingAdmin] = useState(false);
+  const [adminCheckComplete, setAdminCheckComplete] = useState(false);
 
-  if (isLoading) {
+  // Only check admin status when this guard mounts (on admin routes)
+  useEffect(() => {
+    if (!isLoading && user && isAdmin === null && !isCheckingAdmin) {
+      setIsCheckingAdmin(true);
+      console.log("[AdminGuard] Triggering admin check...");
+      checkAdminStatus().finally(() => {
+        setIsCheckingAdmin(false);
+        setAdminCheckComplete(true);
+      });
+    } else if (!isLoading && !user) {
+      setAdminCheckComplete(true);
+    } else if (isAdmin !== null) {
+      setAdminCheckComplete(true);
+    }
+  }, [isLoading, user, isAdmin, checkAdminStatus, isCheckingAdmin]);
+
+  // Show loading while checking auth or admin status
+  if (isLoading || (user && isAdmin === null && !adminCheckComplete)) {
     return (
       <Layout>
         <div className="container py-12 flex justify-center items-center min-h-[50vh]">
@@ -24,11 +43,14 @@ export function AdminGuard({ children }: AdminGuardProps) {
     );
   }
 
+  // Redirect to login if not authenticated
   if (!user) {
+    console.log("[AdminGuard] No user, redirecting to login");
     return <Navigate to="/login" replace />;
   }
 
-  if (!isAdmin) {
+  // Show not authorized if admin check complete and not admin
+  if (adminCheckComplete && isAdmin === false) {
     return (
       <Layout>
         <div className="container py-12 flex justify-center items-center min-h-[50vh]">

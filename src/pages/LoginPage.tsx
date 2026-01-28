@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Layout } from "@/components/layout/Layout";
@@ -14,14 +14,15 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const { signIn, signUp, user } = useAuth();
+  const { signIn, signUp, user, isLoading } = useAuth();
   const navigate = useNavigate();
 
-  // Redirect if already logged in
-  if (user) {
-    navigate("/admin");
-    return null;
-  }
+  // Redirect if already logged in - use useEffect to avoid render-time navigation
+  useEffect(() => {
+    if (!isLoading && user) {
+      navigate("/admin", { replace: true });
+    }
+  }, [user, isLoading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,15 +35,14 @@ export default function LoginPage() {
         if (error) {
           setError(error.message);
         } else {
-          // Auto-confirm is enabled, so user is logged in immediately
-          navigate("/admin");
+          navigate("/admin", { replace: true });
         }
       } else {
         const { error } = await signIn(email, password);
         if (error) {
           setError(error.message);
         } else {
-          navigate("/admin");
+          navigate("/admin", { replace: true });
         }
       }
     } catch (err) {
@@ -51,6 +51,28 @@ export default function LoginPage() {
       setIsSubmitting(false);
     }
   };
+
+  // Show loading state while checking auth
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="container py-12 flex justify-center items-center min-h-[50vh]">
+          <Loader2 size={32} className="animate-spin text-brand-600" />
+        </div>
+      </Layout>
+    );
+  }
+
+  // Don't render form if user is logged in (will redirect via useEffect)
+  if (user) {
+    return (
+      <Layout>
+        <div className="container py-12 flex justify-center items-center min-h-[50vh]">
+          <Loader2 size={32} className="animate-spin text-brand-600" />
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>

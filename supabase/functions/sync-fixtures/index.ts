@@ -1,7 +1,7 @@
 /// <reference types="https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts" />
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.93.2';
 import { corsHeaders, handleCors, validateAdminToken } from '../_shared/cors.ts';
-import { createFootballDataProvider } from '../_shared/football-data-provider.ts';
+import { createApiFootballProvider } from '../_shared/api-football-provider.ts';
 import { upsertFixture, logSyncRun } from '../_shared/upsert.ts';
 import type { SyncResult } from '../_shared/types.ts';
 
@@ -29,9 +29,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    const apiKey = Deno.env.get('FOOTBALL_DATA_API_KEY');
+    const apiKey = Deno.env.get('API_FOOTBALL_KEY');
     if (!apiKey) {
-      throw new Error('FOOTBALL_DATA_API_KEY not configured');
+      throw new Error('API_FOOTBALL_KEY not configured');
     }
 
     const supabase = createClient(
@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    const provider = createFootballDataProvider(apiKey);
+    const provider = createApiFootballProvider(apiKey);
 
     // Build maps of external IDs to internal IDs
     const { data: leagues } = await supabase

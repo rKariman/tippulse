@@ -6,7 +6,8 @@ import { ArticleCard } from "@/components/cards/ArticleCard";
 import { LeagueChip } from "@/components/cards/LeagueChip";
 import { NewsletterWidget } from "@/components/widgets/NewsletterWidget";
 import { Link } from "react-router-dom";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Loader2 } from "lucide-react";
+import { useUpcomingFixtures, useFeaturedLeagues, usePreviews } from "@/hooks/useMatchData";
 import {
   mockTips,
   mockFixtures,
@@ -17,11 +18,58 @@ import {
 } from "@/lib/mockData";
 
 export default function HomePage() {
+  // Fetch real data
+  const { data: realFixtures, isLoading: fixturesLoading } = useUpcomingFixtures({ 
+    limit: 4, 
+    dateRange: "upcoming" 
+  });
+  const { data: realLeagues } = useFeaturedLeagues();
+  const { data: previews } = usePreviews();
+
+  // Use real data if available, otherwise fallback to mock
+  const hasRealFixtures = realFixtures && realFixtures.length > 0;
+  const hasRealLeagues = realLeagues && realLeagues.length > 0;
+
   const featuredTips = mockTips.slice(0, 4);
-  const todayFixtures = mockFixtures.slice(0, 4);
   const featuredOffers = mockOffers.slice(0, 3);
   const latestArticles = mockArticles.slice(0, 4);
-  const featuredLeagues = mockLeagues.filter((l) => l.is_featured);
+  const featuredLeagues = hasRealLeagues 
+    ? realLeagues 
+    : mockLeagues.filter((l) => l.is_featured);
+
+  // Create a map of fixture IDs to preview slugs
+  const previewMap = new Map<string, string>();
+  if (previews) {
+    previews.forEach((p) => {
+      previewMap.set(p.fixture_id, p.slug);
+    });
+  }
+  mockPreviews.forEach((p) => {
+    previewMap.set(p.fixture.id, p.slug);
+  });
+
+  // Convert real fixtures to display format
+  const todayFixtures = hasRealFixtures
+    ? realFixtures.map((f) => ({
+        id: f.id,
+        homeTeam: f.home_team?.name || "TBD",
+        awayTeam: f.away_team?.name || "TBD",
+        kickoffAt: f.kickoff_at,
+        league: f.league?.name || "",
+        venue: f.venue,
+        slug: f.slug,
+        previewSlug: previewMap.get(f.id) || f.slug,
+      }))
+    : mockFixtures.slice(0, 4).map((f) => ({
+        id: f.id,
+        homeTeam: f.homeTeam.name,
+        awayTeam: f.awayTeam.name,
+        kickoffAt: f.kickoffAt,
+        league: f.league.name,
+        venue: f.venue,
+        slug: f.slug,
+        previewSlug: previewMap.get(f.id) || f.slug,
+      }));
 
   return (
     <Layout>
@@ -111,20 +159,26 @@ export default function HomePage() {
                   See All <ChevronRight size={16} />
                 </Link>
               </div>
-              <div className="space-y-3">
-                {todayFixtures.map((fixture) => (
-                  <MatchRow
-                    key={fixture.id}
-                    id={fixture.id}
-                    homeTeam={fixture.homeTeam.name}
-                    awayTeam={fixture.awayTeam.name}
-                    kickoffAt={fixture.kickoffAt}
-                    league={fixture.league.name}
-                    venue={fixture.venue}
-                    previewSlug={mockPreviews.find((p) => p.fixture.id === fixture.id)?.slug}
-                  />
-                ))}
-              </div>
+              {fixturesLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-brand-600" />
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {todayFixtures.map((fixture) => (
+                    <MatchRow
+                      key={fixture.id}
+                      id={fixture.id}
+                      homeTeam={fixture.homeTeam}
+                      awayTeam={fixture.awayTeam}
+                      kickoffAt={fixture.kickoffAt}
+                      league={fixture.league}
+                      venue={fixture.venue}
+                      previewSlug={fixture.previewSlug}
+                    />
+                  ))}
+                </div>
+              )}
             </section>
 
             {/* Featured Leagues */}
@@ -136,7 +190,10 @@ export default function HomePage() {
                     key={league.id}
                     name={league.name}
                     slug={league.slug}
-                    matchCount={mockFixtures.filter((f) => f.league.id === league.id).length}
+                    matchCount={hasRealFixtures 
+                      ? realFixtures.filter((f) => f.league?.id === league.id).length
+                      : mockFixtures.filter((f) => f.league.id === league.id).length
+                    }
                   />
                 ))}
               </div>

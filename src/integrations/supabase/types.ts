@@ -84,10 +84,15 @@ export type Database = {
         Row: {
           away_team_id: string | null
           created_at: string | null
+          external_id: string | null
           home_team_id: string | null
           id: string
           kickoff_at: string
+          last_synced_at: string | null
           league_id: string | null
+          provider: string | null
+          round: string | null
+          season: string | null
           slug: string
           status: string | null
           venue: string | null
@@ -95,10 +100,15 @@ export type Database = {
         Insert: {
           away_team_id?: string | null
           created_at?: string | null
+          external_id?: string | null
           home_team_id?: string | null
           id?: string
           kickoff_at: string
+          last_synced_at?: string | null
           league_id?: string | null
+          provider?: string | null
+          round?: string | null
+          season?: string | null
           slug: string
           status?: string | null
           venue?: string | null
@@ -106,10 +116,15 @@ export type Database = {
         Update: {
           away_team_id?: string | null
           created_at?: string | null
+          external_id?: string | null
           home_team_id?: string | null
           id?: string
           kickoff_at?: string
+          last_synced_at?: string | null
           league_id?: string | null
+          provider?: string | null
+          round?: string | null
+          season?: string | null
           slug?: string
           status?: string | null
           venue?: string | null
@@ -142,27 +157,36 @@ export type Database = {
         Row: {
           country: string | null
           created_at: string | null
+          external_id: string | null
           id: string
           is_featured: boolean | null
+          last_synced_at: string | null
           name: string
+          provider: string | null
           slug: string
           sport: string | null
         }
         Insert: {
           country?: string | null
           created_at?: string | null
+          external_id?: string | null
           id?: string
           is_featured?: boolean | null
+          last_synced_at?: string | null
           name: string
+          provider?: string | null
           slug: string
           sport?: string | null
         }
         Update: {
           country?: string | null
           created_at?: string | null
+          external_id?: string | null
           id?: string
           is_featured?: boolean | null
+          last_synced_at?: string | null
           name?: string
+          provider?: string | null
           slug?: string
           sport?: string | null
         }
@@ -355,26 +379,85 @@ export type Database = {
         }
         Relationships: []
       }
+      sync_runs: {
+        Row: {
+          created_at: string | null
+          error: string | null
+          id: string
+          job_type: string
+          params: Json | null
+          provider: string
+          success: boolean
+          upserted_fixtures: number | null
+          upserted_leagues: number | null
+          upserted_teams: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          error?: string | null
+          id?: string
+          job_type: string
+          params?: Json | null
+          provider: string
+          success: boolean
+          upserted_fixtures?: number | null
+          upserted_leagues?: number | null
+          upserted_teams?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          error?: string | null
+          id?: string
+          job_type?: string
+          params?: Json | null
+          provider?: string
+          success?: boolean
+          upserted_fixtures?: number | null
+          upserted_leagues?: number | null
+          upserted_teams?: number | null
+        }
+        Relationships: []
+      }
       teams: {
         Row: {
           created_at: string | null
+          external_id: string | null
           id: string
+          last_synced_at: string | null
+          league_id: string | null
           name: string
+          provider: string | null
           slug: string
         }
         Insert: {
           created_at?: string | null
+          external_id?: string | null
           id?: string
+          last_synced_at?: string | null
+          league_id?: string | null
           name: string
+          provider?: string | null
           slug: string
         }
         Update: {
           created_at?: string | null
+          external_id?: string | null
           id?: string
+          last_synced_at?: string | null
+          league_id?: string | null
           name?: string
+          provider?: string | null
           slug?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "teams_league_id_fkey"
+            columns: ["league_id"]
+            isOneToOne: false
+            referencedRelation: "leagues"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tips: {
         Row: {

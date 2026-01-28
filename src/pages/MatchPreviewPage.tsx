@@ -3,49 +3,46 @@ import { Layout } from "@/components/layout/Layout";
 import { PreviewTipBlock } from "@/components/cards/PreviewTipBlock";
 import { OfferCard } from "@/components/cards/OfferCard";
 import { NewsletterWidget } from "@/components/widgets/NewsletterWidget";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle, Trophy, Clock, TrendingUp } from "lucide-react";
 import { useFixtureBySlug, usePreviewByFixtureSlug } from "@/hooks/useMatchData";
-import { mockPreviews, mockOffers, mockTips, mockBookmakers } from "@/lib/mockData";
+import { useTodayFixturesForTips, useGenerateAITips } from "@/hooks/useTodayTips";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function MatchPreviewPage() {
   const { slug } = useParams<{ slug: string }>();
 
-  // Try to fetch real fixture data
+  // Fetch real fixture and preview data
   const { data: fixture, isLoading: fixtureLoading } = useFixtureBySlug(slug || "");
   const { data: preview, isLoading: previewLoading } = usePreviewByFixtureSlug(slug || "");
 
-  // Fallback to mock data
-  const mockPreview = mockPreviews.find((p) => p.slug === slug);
-  
+  // Fetch tips fixtures and AI tips for sidebar
+  const { data: tipsFixtures } = useTodayFixturesForTips();
+  const { tips: aiTips } = useGenerateAITips(tipsFixtures);
+
+  // Fetch real free bets from Supabase
+  const { data: freeBetsData } = useQuery({
+    queryKey: ["free_bets", "sidebar"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("free_bets")
+        .select("id, title, slug, bookmaker, description, target_url")
+        .eq("published", true)
+        .order("is_featured", { ascending: false })
+        .limit(2);
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const isLoading = fixtureLoading || previewLoading;
 
-  // Determine what data to show
-  const hasRealFixture = !!fixture;
-  const hasPreview = !!preview || !!mockPreview;
-
-  // Get fixture details from either real or mock data
-  const fixtureData = hasRealFixture
-    ? {
-        homeTeam: fixture.home_team?.name || "TBD",
-        awayTeam: fixture.away_team?.name || "TBD",
-        kickoffAt: fixture.kickoff_at,
-        venue: fixture.venue,
-        league: fixture.league?.name || "",
-      }
-    : mockPreview
-    ? {
-        homeTeam: mockPreview.fixture.homeTeam.name,
-        awayTeam: mockPreview.fixture.awayTeam.name,
-        kickoffAt: mockPreview.fixture.kickoffAt,
-        venue: mockPreview.fixture.venue,
-        league: mockPreview.fixture.league.name,
-      }
-    : null;
-
-  // Get related tips (from mock data for now - tips are editorial content)
-  const relatedTips = mockPreview
-    ? mockTips.filter((t) => t.fixture.id === mockPreview.fixture.id)
-    : [];
+  // Get sidebar tips
+  const sidebarTips = (tipsFixtures || []).slice(0, 3).map((f) => ({
+    id: f.id,
+    fixture: f,
+    tip: aiTips[f.id],
+  }));
 
   if (isLoading) {
     return (
@@ -57,11 +54,12 @@ export default function MatchPreviewPage() {
     );
   }
 
-  // No fixture or preview found
-  if (!fixtureData && !hasRealFixture) {
+  // No fixture found
+  if (!fixture) {
     return (
       <Layout>
         <div className="container py-12 text-center">
+          <Trophy size={48} className="mx-auto text-ink-300 mb-4" />
           <h1 className="text-2xl font-bold text-ink-900 mb-2">Match Not Found</h1>
           <p className="text-ink-500 mb-4">The match you're looking for doesn't exist.</p>
           <Link to="/predictions" className="btn-primary inline-block px-6 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700">
@@ -72,22 +70,24 @@ export default function MatchPreviewPage() {
     );
   }
 
-  const displayData = fixtureData || {
-    homeTeam: fixture?.home_team?.name || "Team A",
-    awayTeam: fixture?.away_team?.name || "Team B",
-    kickoffAt: fixture?.kickoff_at || new Date().toISOString(),
-    venue: fixture?.venue,
-    league: fixture?.league?.name || "",
+  const displayData = {
+    homeTeam: fixture.home_team?.name || "TBD",
+    awayTeam: fixture.away_team?.name || "TBD",
+    kickoffAt: fixture.kickoff_at,
+    venue: fixture.venue,
+    league: fixture.league?.name || "",
   };
 
   const kickoffTime = new Date(displayData.kickoffAt).toLocaleTimeString("en-GB", {
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: "Europe/Rome",
   });
   const kickoffDate = new Date(displayData.kickoffAt).toLocaleDateString("en-GB", {
     weekday: "long",
     day: "numeric",
     month: "long",
+    timeZone: "Europe/Rome",
   });
 
   return (
@@ -96,6 +96,7 @@ export default function MatchPreviewPage() {
       <div className="bg-brand-800 text-white">
         <div className="container py-6">
           <div className="flex items-center gap-2 text-sm text-brand-200 mb-4">
+            <Clock size={14} />
             <span>{kickoffTime}</span>
             <span>•</span>
             <span>{kickoffDate}</span>
@@ -115,22 +116,6 @@ export default function MatchPreviewPage() {
                 </span>
               </div>
               <h2 className="font-bold text-lg md:text-xl">{displayData.homeTeam}</h2>
-              <div className="flex justify-center gap-1 mt-2">
-                {["W", "W", "D", "W", "L"].map((result, i) => (
-                  <span
-                    key={i}
-                    className={`w-4 h-4 rounded-sm text-[10px] flex items-center justify-center font-bold ${
-                      result === "W"
-                        ? "bg-success-500"
-                        : result === "D"
-                        ? "bg-warning-500"
-                        : "bg-danger-500"
-                    }`}
-                  >
-                    {result}
-                  </span>
-                ))}
-              </div>
             </div>
 
             {/* VS */}
@@ -146,22 +131,6 @@ export default function MatchPreviewPage() {
                 </span>
               </div>
               <h2 className="font-bold text-lg md:text-xl">{displayData.awayTeam}</h2>
-              <div className="flex justify-center gap-1 mt-2">
-                {["L", "W", "W", "D", "W"].map((result, i) => (
-                  <span
-                    key={i}
-                    className={`w-4 h-4 rounded-sm text-[10px] flex items-center justify-center font-bold ${
-                      result === "W"
-                        ? "bg-success-500"
-                        : result === "D"
-                        ? "bg-warning-500"
-                        : "bg-danger-500"
-                    }`}
-                  >
-                    {result}
-                  </span>
-                ))}
-              </div>
             </div>
           </div>
         </div>
@@ -172,23 +141,23 @@ export default function MatchPreviewPage() {
           {/* Main content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Intro - show if we have a preview */}
-            {(preview || mockPreview) && (
+            {preview && (
               <div className="card-base p-6">
                 <h1 className="text-xl font-bold text-ink-900 mb-3">
-                  {preview?.title || mockPreview?.title}
+                  {preview.title}
                 </h1>
                 <p className="text-ink-600">
-                  {preview?.intro || mockPreview?.intro}
+                  {preview.intro}
                 </p>
               </div>
             )}
 
             {/* No preview yet message */}
-            {!preview && !mockPreview && hasRealFixture && (
+            {!preview && (
               <div className="card-base p-6 text-center border-warning-500/30 bg-warning-50">
                 <div className="flex items-center justify-center gap-2 text-warning-700 mb-2">
                   <AlertCircle className="h-5 w-5" />
-                  <span className="font-semibold">No Preview Yet</span>
+                  <span className="font-semibold">No Preview Available Yet</span>
                 </div>
                 <p className="text-ink-600 mb-4">
                   Our expert analysis for this match is coming soon. Check back closer to kick-off.
@@ -197,75 +166,78 @@ export default function MatchPreviewPage() {
                   to="/tips/bet-of-the-day"
                   className="text-brand-600 hover:text-brand-700 font-medium"
                 >
-                  View All Tips →
+                  View Today's Tips →
                 </Link>
-              </div>
-            )}
-
-            {/* Tips */}
-            {relatedTips.map((tip) => (
-              <PreviewTipBlock
-                key={tip.id}
-                title={tip.title}
-                selection={tip.selection}
-                odds={tip.odds}
-                stars={tip.stars}
-                reasoning={tip.reasoningLong || tip.reasoningShort}
-                bookmakers={mockBookmakers.map((b) => ({
-                  id: b.id,
-                  name: b.name,
-                  offerSlug: mockOffers.find((o) => o.bookmaker.id === b.id)?.slug || b.slug,
-                }))}
-              />
-            ))}
-
-            {/* If no tips and we have a preview, show placeholder */}
-            {relatedTips.length === 0 && (preview || mockPreview) && (
-              <div className="card-base p-6 text-center">
-                <p className="text-ink-500">No tips available for this match yet.</p>
-                <p className="text-sm text-ink-400 mt-1">Check back closer to kick-off.</p>
               </div>
             )}
           </div>
 
           {/* Sidebar */}
           <aside className="space-y-6">
-            {/* Top Offers */}
-            <div className="card-base overflow-hidden">
-              <div className="widget-header">Top Offers</div>
-              <div className="p-4 space-y-4">
-                {mockOffers.slice(0, 2).map((offer) => (
-                  <OfferCard
-                    key={offer.id}
-                    id={offer.id}
-                    title={offer.title}
-                    description={offer.description}
-                    bookmaker={offer.bookmaker}
-                    targetUrl={offer.targetUrl}
-                    slug={offer.slug}
-                  />
-                ))}
+            {/* Top Offers - from real data */}
+            {freeBetsData && freeBetsData.length > 0 && (
+              <div className="card-base overflow-hidden">
+                <div className="widget-header">Top Offers</div>
+                <div className="p-4 space-y-4">
+                  {freeBetsData.map((offer) => (
+                    <OfferCard
+                      key={offer.id}
+                      id={offer.id}
+                      title={offer.title}
+                      description={offer.description}
+                      bookmaker={{ name: offer.bookmaker || "Bookmaker" }}
+                      targetUrl={offer.target_url}
+                      slug={offer.slug}
+                    />
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             <NewsletterWidget />
 
-            {/* Today's Tips Widget */}
+            {/* Today's Tips Widget - Real data */}
             <div className="card-base overflow-hidden">
               <div className="widget-header">Today's Tips</div>
               <div className="divide-y divide-ink-100">
-                {mockTips.slice(0, 3).map((tip) => (
-                  <div key={tip.id} className="p-3">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs text-ink-400">{tip.fixture.league.name}</span>
-                      <span className="odds-display text-xs px-2 py-0.5">{tip.odds.toFixed(2)}</span>
-                    </div>
-                    <p className="text-sm font-medium text-ink-900">{tip.selection}</p>
-                    <p className="text-xs text-ink-500 mt-0.5">
-                      {tip.fixture.homeTeam.name} vs {tip.fixture.awayTeam.name}
-                    </p>
+                {sidebarTips.length === 0 ? (
+                  <div className="p-4 text-center text-ink-500 text-sm">
+                    <p>No tips available today.</p>
                   </div>
-                ))}
+                ) : (
+                  sidebarTips.map(({ id, fixture: f, tip }) => (
+                    <div key={id} className="p-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs text-ink-400">{f.league?.name || "League"}</span>
+                        <span className="text-xs text-ink-400">
+                          {new Date(f.kickoff_at).toLocaleTimeString("en-GB", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            timeZone: "Europe/Rome",
+                          })}
+                        </span>
+                      </div>
+                      {tip ? (
+                        <>
+                          <p className="text-sm font-medium text-ink-900 flex items-center gap-1">
+                            <TrendingUp size={12} className="text-brand-600" />
+                            {tip.prediction}
+                          </p>
+                          <p className="text-xs text-ink-500 mt-0.5">
+                            {f.home_team?.name} vs {f.away_team?.name}
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <div className="h-4 bg-ink-100 rounded animate-pulse mb-1" />
+                          <p className="text-xs text-ink-500">
+                            {f.home_team?.name} vs {f.away_team?.name}
+                          </p>
+                        </>
+                      )}
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </aside>

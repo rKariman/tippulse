@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
 
 interface FixtureInput {
@@ -17,6 +18,15 @@ interface AITip {
   market: string;
 }
 
+interface CachedTip {
+  fixture_id: string;
+  prediction: string;
+  reasoning: string;
+  confidence: string;
+  market: string;
+  expires_at: string;
+}
+
 // Major leagues for confidence assessment
 const MAJOR_LEAGUES = [
   "champions league",
@@ -31,6 +41,65 @@ const MAJOR_LEAGUES = [
 function isMajorLeague(leagueName: string): boolean {
   const lowerName = leagueName.toLowerCase();
   return MAJOR_LEAGUES.some((major) => lowerName.includes(major));
+}
+
+function getSupabaseClient() {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  return createClient(supabaseUrl, supabaseServiceKey);
+}
+
+async function getCachedTips(fixtureIds: string[]): Promise<Map<string, AITip>> {
+  const supabase = getSupabaseClient();
+  const now = new Date().toISOString();
+  
+  const { data, error } = await supabase
+    .from("ai_tips_cache")
+    .select("fixture_id, prediction, reasoning, confidence, market, expires_at")
+    .in("fixture_id", fixtureIds)
+    .gt("expires_at", now);
+
+  if (error) {
+    console.error("Error fetching cached tips:", error);
+    return new Map();
+  }
+
+  const cachedMap = new Map<string, AITip>();
+  (data as CachedTip[]).forEach((tip) => {
+    cachedMap.set(tip.fixture_id, {
+      fixtureId: tip.fixture_id,
+      prediction: tip.prediction,
+      reasoning: tip.reasoning,
+      confidence: tip.confidence as AITip["confidence"],
+      market: tip.market,
+    });
+  });
+
+  return cachedMap;
+}
+
+async function cacheTips(tips: AITip[]): Promise<void> {
+  const supabase = getSupabaseClient();
+  
+  const cacheEntries = tips.map((tip) => ({
+    fixture_id: tip.fixtureId,
+    prediction: tip.prediction,
+    reasoning: tip.reasoning,
+    confidence: tip.confidence,
+    market: tip.market,
+    generated_at: new Date().toISOString(),
+    expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours
+  }));
+
+  const { error } = await supabase
+    .from("ai_tips_cache")
+    .upsert(cacheEntries, { onConflict: "fixture_id" });
+
+  if (error) {
+    console.error("Error caching tips:", error);
+  } else {
+    console.log(`Cached ${tips.length} tips`);
+  }
 }
 
 async function generateTipsWithAI(fixtures: FixtureInput[]): Promise<AITip[]> {
@@ -171,7 +240,7 @@ serve(async (req) => {
   }
 
   try {
-    const { fixtures } = await req.json();
+    const { fixtures, skipCache = false } = await req.json();
 
     if (!fixtures || !Array.isArray(fixtures) || fixtures.length === 0) {
       return new Response(
@@ -183,12 +252,46 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Generating tips for ${fixtures.length} fixtures`);
+    console.log(`Processing ${fixtures.length} fixtures (skipCache: ${skipCache})`);
 
-    const tips = await generateTipsWithAI(fixtures);
+    const fixtureIds = fixtures.map((f: FixtureInput) => f.id);
+    
+    // Check cache first (unless skipCache is true)
+    let cachedTips = new Map<string, AITip>();
+    if (!skipCache) {
+      cachedTips = await getCachedTips(fixtureIds);
+      console.log(`Found ${cachedTips.size} cached tips`);
+    }
+
+    // Find fixtures that need new tips
+    const uncachedFixtures = fixtures.filter((f: FixtureInput) => !cachedTips.has(f.id));
+    
+    let newTips: AITip[] = [];
+    if (uncachedFixtures.length > 0) {
+      console.log(`Generating tips for ${uncachedFixtures.length} uncached fixtures`);
+      newTips = await generateTipsWithAI(uncachedFixtures);
+      
+      // Cache the new tips
+      if (newTips.length > 0) {
+        await cacheTips(newTips);
+      }
+    }
+
+    // Combine cached and new tips
+    const allTips: AITip[] = fixtures.map((f: FixtureInput) => {
+      if (cachedTips.has(f.id)) {
+        return cachedTips.get(f.id)!;
+      }
+      return newTips.find((t) => t.fixtureId === f.id) || generateSingleHeuristicTip(f);
+    });
 
     return new Response(
-      JSON.stringify({ tips, generatedAt: new Date().toISOString() }),
+      JSON.stringify({ 
+        tips: allTips, 
+        generatedAt: new Date().toISOString(),
+        cached: cachedTips.size,
+        generated: newTips.length,
+      }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       }

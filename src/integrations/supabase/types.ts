@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_tips_cache: {
+        Row: {
+          confidence: string
+          expires_at: string
+          fixture_id: string
+          generated_at: string
+          id: string
+          market: string
+          prediction: string
+          reasoning: string
+        }
+        Insert: {
+          confidence: string
+          expires_at?: string
+          fixture_id: string
+          generated_at?: string
+          id?: string
+          market: string
+          prediction: string
+          reasoning: string
+        }
+        Update: {
+          confidence?: string
+          expires_at?: string
+          fixture_id?: string
+          generated_at?: string
+          id?: string
+          market?: string
+          prediction?: string
+          reasoning?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_tips_cache_fixture_id_fkey"
+            columns: ["fixture_id"]
+            isOneToOne: true
+            referencedRelation: "fixtures"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       articles: {
         Row: {
           article_type: string | null

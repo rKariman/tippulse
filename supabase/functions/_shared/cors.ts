@@ -24,13 +24,24 @@ export function validateAdminToken(req: Request): boolean {
 }
 
 export function validateCronToken(req: Request): boolean {
+  // Check x-cron-token header
   const cronToken = req.headers.get('x-cron-token');
-  const expectedToken = Deno.env.get('SYNC_ADMIN_TOKEN'); // Reuse same token for cron
+  const expectedToken = Deno.env.get('SYNC_ADMIN_TOKEN');
   
-  if (!expectedToken) {
-    console.error('SYNC_ADMIN_TOKEN not configured for cron');
-    return false;
+  if (cronToken && expectedToken && cronToken === expectedToken) {
+    return true;
   }
   
-  return cronToken === expectedToken;
+  // Also accept service role key in Authorization header (for pg_cron)
+  const authHeader = req.headers.get('Authorization');
+  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  
+  if (authHeader && serviceRoleKey) {
+    const token = authHeader.replace('Bearer ', '');
+    if (token === serviceRoleKey) {
+      return true;
+    }
+  }
+  
+  return false;
 }

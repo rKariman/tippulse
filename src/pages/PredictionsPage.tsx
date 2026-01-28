@@ -7,16 +7,30 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ChevronRight, Loader2, Trophy } from "lucide-react";
 import { useUpcomingFixtures, useLeagues, useFixturesByLeague, usePreviews } from "@/hooks/useMatchData";
+import { useQuery } from "@tanstack/react-query";
+import { useLiveMinute } from "@/hooks/useLiveMinute";
+import { LiveMatchBadge } from "@/components/cards/LiveMatchBadge";
 
 export default function PredictionsPage() {
   const [dateFilter, setDateFilter] = useState<"today" | "tomorrow" | "upcoming">("today");
   const [leagueFilter, setLeagueFilter] = useState<string | null>(null);
 
-  // Fetch real data only
+  // Fetch real data only with auto-refresh for live scores
   const { data: realLeagues, isLoading: leaguesLoading } = useLeagues();
-  const { data: fixtureGroups, isLoading: fixturesLoading } = useFixturesByLeague(leagueFilter);
+  const { data: fixtureGroups, isLoading: fixturesLoading, refetch } = useFixturesByLeague(leagueFilter);
   const { data: upcomingFixtures } = useUpcomingFixtures({ limit: 4, dateRange: dateFilter });
   const { data: previews } = usePreviews();
+  
+  // Auto-refresh every 30 seconds for live scores
+  useQuery({
+    queryKey: ["predictions", "live-refresh"],
+    queryFn: async () => {
+      await refetch();
+      return Date.now();
+    },
+    refetchInterval: 30000,
+    refetchIntervalInBackground: false,
+  });
 
   // Create a map of fixture IDs to preview slugs
   const previewMap = new Map<string, string>();
@@ -119,6 +133,11 @@ export default function PredictionsPage() {
                         league={group.league.name}
                         venue={fixture.venue}
                         previewSlug={previewMap.get(fixture.id) || fixture.slug}
+                        homeScore={fixture.home_score}
+                        awayScore={fixture.away_score}
+                        phase={fixture.phase}
+                        phaseStartedAt={fixture.phase_started_at}
+                        baseMinute={fixture.base_minute}
                       />
                     </div>
                   ))}

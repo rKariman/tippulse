@@ -138,14 +138,20 @@ export type Database = {
       }
       fixtures: {
         Row: {
+          away_score: number | null
           away_team_id: string | null
+          base_minute: number | null
           created_at: string | null
           external_id: string | null
+          home_score: number | null
           home_team_id: string | null
           id: string
           kickoff_at: string
+          last_live_update_at: string | null
           last_synced_at: string | null
           league_id: string | null
+          phase: string | null
+          phase_started_at: string | null
           provider: string | null
           round: string | null
           season: string | null
@@ -154,14 +160,20 @@ export type Database = {
           venue: string | null
         }
         Insert: {
+          away_score?: number | null
           away_team_id?: string | null
+          base_minute?: number | null
           created_at?: string | null
           external_id?: string | null
+          home_score?: number | null
           home_team_id?: string | null
           id?: string
           kickoff_at: string
+          last_live_update_at?: string | null
           last_synced_at?: string | null
           league_id?: string | null
+          phase?: string | null
+          phase_started_at?: string | null
           provider?: string | null
           round?: string | null
           season?: string | null
@@ -170,14 +182,20 @@ export type Database = {
           venue?: string | null
         }
         Update: {
+          away_score?: number | null
           away_team_id?: string | null
+          base_minute?: number | null
           created_at?: string | null
           external_id?: string | null
+          home_score?: number | null
           home_team_id?: string | null
           id?: string
           kickoff_at?: string
+          last_live_update_at?: string | null
           last_synced_at?: string | null
           league_id?: string | null
+          phase?: string | null
+          phase_started_at?: string | null
           provider?: string | null
           round?: string | null
           season?: string | null

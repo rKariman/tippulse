@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
+import { useLiveMinute, formatScore, MatchPhase } from "@/hooks/useLiveMinute";
+import { LiveMatchBadge } from "./LiveMatchBadge";
 
 export interface MatchRowProps {
   id: string;
@@ -9,6 +11,12 @@ export interface MatchRowProps {
   league: string;
   venue?: string;
   previewSlug?: string;
+  // Live score fields
+  homeScore?: number | null;
+  awayScore?: number | null;
+  phase?: MatchPhase | string | null;
+  phaseStartedAt?: string | null;
+  baseMinute?: number | null;
 }
 
 export function MatchRow({
@@ -17,35 +25,51 @@ export function MatchRow({
   kickoffAt,
   venue,
   previewSlug,
+  homeScore,
+  awayScore,
+  phase,
+  phaseStartedAt,
+  baseMinute,
 }: MatchRowProps) {
-  const kickoffTime = new Date(kickoffAt).toLocaleTimeString("en-GB", {
-    hour: "2-digit",
-    minute: "2-digit",
+  const liveStatus = useLiveMinute({
+    phase: phase || 'scheduled',
+    phaseStartedAt: phaseStartedAt || null,
+    baseMinute: baseMinute ?? null,
+    kickoffAt,
   });
 
-  const kickoffDate = new Date(kickoffAt).toLocaleDateString("en-GB", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-  });
+  const showScore = liveStatus.isLive || liveStatus.isHalfTime || liveStatus.isFinished || liveStatus.isPenalties;
 
   const content = (
     <div className="flex items-center gap-4 p-4 bg-surface border border-ink-200 rounded-xl hover:shadow-lift hover:-translate-y-[1px] transition-all cursor-pointer group">
-      {/* Teams */}
+      {/* Teams and Score */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between gap-2">
           <span className="font-semibold text-ink-900 truncate">{homeTeam}</span>
+          {showScore && (
+            <span className="font-bold text-ink-900 tabular-nums">{homeScore ?? 0}</span>
+          )}
         </div>
-        <div className="flex items-center gap-2 mt-1">
+        <div className="flex items-center justify-between gap-2 mt-1">
           <span className="font-semibold text-ink-900 truncate">{awayTeam}</span>
+          {showScore && (
+            <span className="font-bold text-ink-900 tabular-nums">{awayScore ?? 0}</span>
+          )}
         </div>
       </div>
 
-      {/* Time */}
-      <div className="text-center shrink-0">
-        <div className="text-sm font-semibold text-ink-900">{kickoffTime}</div>
-        <div className="text-xs text-ink-400">{kickoffDate}</div>
-        {venue && <div className="text-xs text-ink-400 mt-1">{venue}</div>}
+      {/* Status Badge */}
+      <div className="text-center shrink-0 flex flex-col items-center gap-1">
+        <LiveMatchBadge
+          displayMinute={liveStatus.displayMinute}
+          isLive={liveStatus.isLive}
+          isHalfTime={liveStatus.isHalfTime}
+          isFinished={liveStatus.isFinished}
+          isPenalties={liveStatus.isPenalties}
+        />
+        {!showScore && venue && (
+          <div className="text-xs text-ink-400">{venue}</div>
+        )}
       </div>
 
       {/* Arrow */}

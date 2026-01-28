@@ -16,6 +16,7 @@ A modern sports betting content and affiliate site built with React, Vite, Tailw
 - **Frontend**: React 18 + Vite + TypeScript
 - **Styling**: TailwindCSS with custom design system
 - **Backend**: Supabase (PostgreSQL + Edge Functions)
+- **Data Source**: API-Football (api-football.com)
 - **Data Source**: Football-Data.org API
 
 ---
@@ -26,7 +27,7 @@ A modern sports betting content and affiliate site built with React, Vite, Tailw
 
 - Node.js 18+
 - A Supabase project (auto-provisioned via Lovable Cloud)
-- Football-Data.org API key (free tier available)
+- API-Football key (get one at https://www.api-football.com/)
 
 ### Environment Variables
 
@@ -34,24 +35,24 @@ The following secrets must be configured in Lovable Cloud:
 
 | Variable | Description |
 |----------|-------------|
-| `FOOTBALL_DATA_API_KEY` | Your Football-Data.org API key |
+| `API_FOOTBALL_KEY` | Your API-Football.com API key |
 | `SYNC_ADMIN_TOKEN` | Admin token for sync endpoints (choose a secure string) |
 
 Optional:
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `MATCH_API_DEFAULT_LEAGUES` | Comma-separated league codes | `PL,CL,SA,PD,BL1` |
+| `MATCH_API_DEFAULT_LEAGUES` | Comma-separated league IDs | `39,2,135,140,78` |
 
-### League Codes (Football-Data.org)
+### League IDs (API-Football)
 
-- `PL` - Premier League
-- `CL` - UEFA Champions League
-- `SA` - Serie A
-- `PD` - La Liga
-- `BL1` - Bundesliga
-- `FL1` - Ligue 1
-- `PPL` - Primeira Liga
-- `DED` - Eredivisie
+- `39` - Premier League (England)
+- `2` - UEFA Champions League
+- `135` - Serie A (Italy)
+- `140` - La Liga (Spain)
+- `78` - Bundesliga (Germany)
+- `61` - Ligue 1 (France)
+- `94` - Primeira Liga (Portugal)
+- `88` - Eredivisie (Netherlands)
 
 ---
 

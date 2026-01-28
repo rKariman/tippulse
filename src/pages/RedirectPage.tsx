@@ -1,23 +1,36 @@
 import { useParams, useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { mockOffers } from "@/lib/mockData";
+import { useQuery } from "@tanstack/react-query";
 
 export default function RedirectPage() {
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
   const [error, setError] = useState(false);
 
+  // Fetch the free bet by slug from Supabase
+  const { data: offer, isLoading } = useQuery({
+    queryKey: ["free_bet", "redirect", id],
+    queryFn: async () => {
+      if (!id) return null;
+      
+      const { data, error } = await supabase
+        .from("free_bets")
+        .select("id, slug, bookmaker, target_url")
+        .eq("slug", id)
+        .eq("published", true)
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!id,
+  });
+
   useEffect(() => {
     async function handleRedirect() {
-      if (!id) {
-        setError(true);
-        return;
-      }
-
-      // Find the offer by slug
-      const offer = mockOffers.find((o) => o.slug === id);
-
+      if (isLoading) return;
+      
       if (!offer) {
         setError(true);
         return;
@@ -28,11 +41,10 @@ export default function RedirectPage() {
         await supabase.from("outbound_clicks").insert({
           route: searchParams.get("from") || document.referrer,
           offer_slug: offer.slug,
-          bookmaker_slug: offer.bookmaker.slug,
-          target_url: offer.targetUrl,
+          bookmaker_slug: offer.bookmaker || null,
+          target_url: offer.target_url,
           referrer: document.referrer,
           user_agent: navigator.userAgent,
-          // Note: IP hashing should be done server-side in production
         });
       } catch (err) {
         console.error("Failed to log click:", err);
@@ -40,11 +52,11 @@ export default function RedirectPage() {
       }
 
       // Redirect to target URL
-      window.location.href = offer.targetUrl;
+      window.location.href = offer.target_url;
     }
 
     handleRedirect();
-  }, [id, searchParams]);
+  }, [offer, isLoading, searchParams]);
 
   if (error) {
     return (

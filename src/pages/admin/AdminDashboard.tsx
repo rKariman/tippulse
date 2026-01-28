@@ -25,8 +25,135 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Newspaper, Gift, Plus, Pencil, Trash2, LogOut, Search, Loader2 } from "lucide-react";
+import { Newspaper, Gift, Plus, Pencil, Trash2, LogOut, Search, Loader2, Database, Trophy, Users, Calendar, Clock } from "lucide-react";
 import { toast } from "sonner";
+
+// Debug widget component - shows DB counts and next 5 fixtures
+function DebugWidget() {
+  const { data: counts, isLoading: countsLoading } = useQuery({
+    queryKey: ["admin", "db-counts"],
+    queryFn: async () => {
+      const [leaguesRes, teamsRes, fixturesRes] = await Promise.all([
+        supabase.from("leagues").select("id", { count: "exact", head: true }),
+        supabase.from("teams").select("id", { count: "exact", head: true }),
+        supabase.from("fixtures").select("id", { count: "exact", head: true }),
+      ]);
+      
+      return {
+        leagues: leaguesRes.count || 0,
+        teams: teamsRes.count || 0,
+        fixtures: fixturesRes.count || 0,
+      };
+    },
+  });
+
+  const { data: nextFixtures, isLoading: fixturesLoading } = useQuery({
+    queryKey: ["admin", "next-fixtures"],
+    queryFn: async () => {
+      const now = new Date().toISOString();
+      const { data, error } = await supabase
+        .from("fixtures")
+        .select(`
+          id,
+          kickoff_at,
+          home_team:teams!fixtures_home_team_id_fkey(name),
+          away_team:teams!fixtures_away_team_id_fkey(name),
+          league:leagues!fixtures_league_id_fkey(name)
+        `)
+        .gte("kickoff_at", now)
+        .order("kickoff_at", { ascending: true })
+        .limit(5);
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const formatTime = (isoString: string) => {
+    return new Date(isoString).toLocaleString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "Europe/Rome",
+    });
+  };
+
+  return (
+    <div className="card-base overflow-hidden">
+      <div className="bg-ink-800 text-white px-4 py-3 flex items-center gap-2">
+        <Database size={18} />
+        <span className="font-semibold">Database Debug</span>
+      </div>
+      
+      <div className="p-4">
+        {/* Counts */}
+        <div className="grid grid-cols-3 gap-3 mb-4">
+          <div className="bg-ink-50 rounded-lg p-3 text-center">
+            <Trophy size={18} className="mx-auto text-brand-600 mb-1" />
+            <div className="text-xl font-bold text-ink-900">
+              {countsLoading ? "-" : counts?.leagues}
+            </div>
+            <div className="text-xs text-ink-500">Leagues</div>
+          </div>
+          <div className="bg-ink-50 rounded-lg p-3 text-center">
+            <Users size={18} className="mx-auto text-brand-600 mb-1" />
+            <div className="text-xl font-bold text-ink-900">
+              {countsLoading ? "-" : counts?.teams}
+            </div>
+            <div className="text-xs text-ink-500">Teams</div>
+          </div>
+          <div className="bg-ink-50 rounded-lg p-3 text-center">
+            <Calendar size={18} className="mx-auto text-brand-600 mb-1" />
+            <div className="text-xl font-bold text-ink-900">
+              {countsLoading ? "-" : counts?.fixtures}
+            </div>
+            <div className="text-xs text-ink-500">Fixtures</div>
+          </div>
+        </div>
+
+        {/* Next 5 fixtures */}
+        <div className="border-t border-ink-200 pt-3">
+          <h4 className="text-sm font-semibold text-ink-700 mb-2 flex items-center gap-1">
+            <Clock size={14} />
+            Next 5 Fixtures
+          </h4>
+          
+          {fixturesLoading ? (
+            <div className="text-center py-4">
+              <Loader2 size={20} className="animate-spin text-brand-600 mx-auto" />
+            </div>
+          ) : nextFixtures && nextFixtures.length > 0 ? (
+            <div className="space-y-2">
+              {nextFixtures.map((f) => (
+                <div key={f.id} className="bg-ink-50 rounded p-2 text-xs">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-ink-400">{f.league?.name || "Unknown"}</span>
+                    <span className="text-ink-500">{formatTime(f.kickoff_at)}</span>
+                  </div>
+                  <div className="font-medium text-ink-800">
+                    {f.home_team?.name || "TBD"} vs {f.away_team?.name || "TBD"}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-center text-ink-500 text-sm py-4">
+              No upcoming fixtures. Run sync to fetch data.
+            </p>
+          )}
+        </div>
+
+        <Link
+          to="/admin/sync"
+          className="mt-3 block text-center text-sm link-brand"
+        >
+          Go to Sync Panel →
+        </Link>
+      </div>
+    </div>
+  );
+}
 
 export default function AdminDashboard() {
   const { user, signOut } = useAuth();
@@ -119,9 +246,9 @@ export default function AdminDashboard() {
           </Button>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8">
+        <div className="grid lg:grid-cols-3 gap-8">
           {/* News Posts Section */}
-          <div className="card-base overflow-hidden">
+          <div className="card-base overflow-hidden lg:col-span-1">
             <div className="bg-brand-800 text-white px-4 py-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Newspaper size={18} />
@@ -317,6 +444,9 @@ export default function AdminDashboard() {
               )}
             </div>
           </div>
+
+          {/* Debug Widget Section */}
+          <DebugWidget />
         </div>
       </div>
     </Layout>

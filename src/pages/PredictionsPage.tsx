@@ -5,27 +5,78 @@ import { DateTabs } from "@/components/widgets/DateTabs";
 import { LeagueFilter } from "@/components/widgets/LeagueFilter";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Loader2 } from "lucide-react";
+import { useUpcomingFixtures, useLeagues, useFixturesByLeague, usePreviews } from "@/hooks/useMatchData";
 import { mockFixtures, mockLeagues, mockPreviews } from "@/lib/mockData";
 
 export default function PredictionsPage() {
   const [dateFilter, setDateFilter] = useState<"today" | "tomorrow" | "upcoming">("today");
   const [leagueFilter, setLeagueFilter] = useState<string | null>(null);
 
-  // Group fixtures by league
-  const filteredFixtures = mockFixtures.filter((fixture) => {
-    if (leagueFilter && fixture.league.slug !== leagueFilter) return false;
-    return true;
+  // Fetch real data
+  const { data: realLeagues, isLoading: leaguesLoading } = useLeagues();
+  const { data: fixtureGroups, isLoading: fixturesLoading } = useFixturesByLeague(leagueFilter);
+  const { data: upcomingFixtures } = useUpcomingFixtures({ limit: 4, dateRange: dateFilter });
+  const { data: previews } = usePreviews();
+
+  // Use real data if available, otherwise fall back to mock
+  const leagues = realLeagues && realLeagues.length > 0 ? realLeagues : mockLeagues;
+  const hasRealData = fixtureGroups && fixtureGroups.length > 0;
+
+  // Create a map of fixture IDs to preview slugs
+  const previewMap = new Map<string, string>();
+  if (previews) {
+    previews.forEach((p) => {
+      previewMap.set(p.fixture_id, p.slug);
+    });
+  }
+  mockPreviews.forEach((p) => {
+    previewMap.set(p.fixture.id, p.slug);
   });
 
-  const fixturesByLeague = filteredFixtures.reduce((acc, fixture) => {
-    const leagueName = fixture.league.name;
-    if (!acc[leagueName]) {
-      acc[leagueName] = [];
-    }
-    acc[leagueName].push(fixture);
-    return acc;
-  }, {} as Record<string, typeof mockFixtures>);
+  // Fallback to mock fixtures grouped by league
+  const mockFixturesByLeague = (() => {
+    const filtered = mockFixtures.filter((fixture) => {
+      if (leagueFilter && fixture.league.slug !== leagueFilter) return false;
+      return true;
+    });
+    
+    const grouped: Record<string, typeof mockFixtures> = {};
+    filtered.forEach((fixture) => {
+      const leagueName = fixture.league.name;
+      if (!grouped[leagueName]) {
+        grouped[leagueName] = [];
+      }
+      grouped[leagueName].push(fixture);
+    });
+    
+    return Object.entries(grouped).map(([leagueName, fixtures]) => ({
+      league: { id: fixtures[0].league.slug, name: leagueName, slug: fixtures[0].league.slug },
+      fixtures: fixtures.map(f => ({
+        id: f.id,
+        slug: f.slug,
+        kickoff_at: f.kickoffAt,
+        venue: f.venue,
+        status: 'scheduled' as const,
+        home_team: { id: f.homeTeam.slug, name: f.homeTeam.name, slug: f.homeTeam.slug },
+        away_team: { id: f.awayTeam.slug, name: f.awayTeam.name, slug: f.awayTeam.slug },
+        league: { id: f.league.slug, name: f.league.name, slug: f.league.slug },
+      })),
+    }));
+  })();
+
+  const displayGroups = hasRealData ? fixtureGroups : mockFixturesByLeague;
+  const nextUpFixtures = upcomingFixtures && upcomingFixtures.length > 0
+    ? upcomingFixtures.slice(0, 4)
+    : mockFixtures.slice(0, 4).map(f => ({
+        id: f.id,
+        slug: f.slug,
+        kickoff_at: f.kickoffAt,
+        home_team: { id: f.homeTeam.slug, name: f.homeTeam.name, slug: f.homeTeam.slug },
+        away_team: { id: f.awayTeam.slug, name: f.awayTeam.name, slug: f.awayTeam.slug },
+      }));
+
+  const isLoading = leaguesLoading || fixturesLoading;
 
   return (
     <Layout>
@@ -49,23 +100,23 @@ export default function PredictionsPage() {
                 </span>
               </div>
               <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4">
-                {mockFixtures.slice(0, 4).map((fixture) => (
+                {nextUpFixtures.map((fixture: any) => (
                   <Link
                     key={fixture.id}
-                    to={`/match/${mockPreviews.find((p) => p.fixture.id === fixture.id)?.slug || fixture.slug}`}
+                    to={`/match/${previewMap.get(fixture.id) || fixture.slug}`}
                     className="shrink-0 w-40 p-3 bg-ink-50 rounded-lg hover:bg-ink-100 transition-colors"
                   >
                     <div className="text-xs text-ink-400 mb-1">
-                      {new Date(fixture.kickoffAt).toLocaleTimeString("en-GB", {
+                      {new Date(fixture.kickoff_at).toLocaleTimeString("en-GB", {
                         hour: "2-digit",
                         minute: "2-digit",
                       })}
                     </div>
                     <div className="text-sm font-medium text-ink-900 truncate">
-                      {fixture.homeTeam.name}
+                      {fixture.home_team?.name || 'TBD'}
                     </div>
                     <div className="text-sm font-medium text-ink-900 truncate">
-                      {fixture.awayTeam.name}
+                      {fixture.away_team?.name || 'TBD'}
                     </div>
                   </Link>
                 ))}
@@ -76,35 +127,42 @@ export default function PredictionsPage() {
             <div className="space-y-4">
               <DateTabs selected={dateFilter} onChange={setDateFilter} />
               <LeagueFilter
-                leagues={mockLeagues}
+                leagues={leagues.map(l => ({ id: l.id, name: l.name, slug: l.slug }))}
                 selected={leagueFilter}
                 onChange={setLeagueFilter}
               />
             </div>
 
+            {/* Loading state */}
+            {isLoading && (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-brand-600" />
+              </div>
+            )}
+
             {/* Fixtures by league */}
-            {Object.entries(fixturesByLeague).map(([leagueName, fixtures]) => (
-              <section key={leagueName}>
+            {!isLoading && displayGroups.map((group) => (
+              <section key={group.league.id}>
                 <div className="bg-brand-800 text-white px-4 py-3 rounded-t-xl flex items-center justify-between">
-                  <h3 className="font-semibold">{leagueName}</h3>
+                  <h3 className="font-semibold">{group.league.name}</h3>
                   <Link
-                    to={`/predictions?league=${fixtures[0].league.slug}`}
+                    to={`/predictions?league=${group.league.slug}`}
                     className="text-sm text-brand-200 hover:text-white flex items-center gap-1"
                   >
                     See All <ChevronRight size={14} />
                   </Link>
                 </div>
                 <div className="bg-surface border border-t-0 border-ink-200 rounded-b-xl divide-y divide-ink-100">
-                  {fixtures.map((fixture) => (
+                  {group.fixtures.map((fixture: any) => (
                     <div key={fixture.id} className="p-0">
                       <MatchRow
                         id={fixture.id}
-                        homeTeam={fixture.homeTeam.name}
-                        awayTeam={fixture.awayTeam.name}
-                        kickoffAt={fixture.kickoffAt}
-                        league={fixture.league.name}
+                        homeTeam={fixture.home_team?.name || 'TBD'}
+                        awayTeam={fixture.away_team?.name || 'TBD'}
+                        kickoffAt={fixture.kickoff_at}
+                        league={group.league.name}
                         venue={fixture.venue}
-                        previewSlug={mockPreviews.find((p) => p.fixture.id === fixture.id)?.slug}
+                        previewSlug={previewMap.get(fixture.id) || fixture.slug}
                       />
                     </div>
                   ))}
@@ -112,7 +170,7 @@ export default function PredictionsPage() {
               </section>
             ))}
 
-            {Object.keys(fixturesByLeague).length === 0 && (
+            {!isLoading && displayGroups.length === 0 && (
               <div className="text-center py-12 bg-surface border border-ink-200 rounded-xl">
                 <p className="text-ink-500">No matches available for this selection.</p>
                 <p className="text-sm text-ink-400 mt-1">Try changing the filters or check back later.</p>
@@ -157,7 +215,7 @@ export default function PredictionsPage() {
             <div className="card-base overflow-hidden">
               <div className="widget-header">Popular Leagues</div>
               <div className="p-4 space-y-2">
-                {mockLeagues.map((league) => (
+                {leagues.slice(0, 8).map((league) => (
                   <button
                     key={league.id}
                     onClick={() => setLeagueFilter(leagueFilter === league.slug ? null : league.slug)}

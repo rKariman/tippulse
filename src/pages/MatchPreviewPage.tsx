@@ -1,23 +1,70 @@
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { PreviewTipBlock } from "@/components/cards/PreviewTipBlock";
 import { OfferCard } from "@/components/cards/OfferCard";
 import { NewsletterWidget } from "@/components/widgets/NewsletterWidget";
-import { Link } from "react-router-dom";
+import { Loader2, AlertCircle } from "lucide-react";
+import { useFixtureBySlug, usePreviewByFixtureSlug } from "@/hooks/useMatchData";
 import { mockPreviews, mockOffers, mockTips, mockBookmakers } from "@/lib/mockData";
 
 export default function MatchPreviewPage() {
   const { slug } = useParams<{ slug: string }>();
 
-  const preview = mockPreviews.find((p) => p.slug === slug);
+  // Try to fetch real fixture data
+  const { data: fixture, isLoading: fixtureLoading } = useFixtureBySlug(slug || "");
+  const { data: preview, isLoading: previewLoading } = usePreviewByFixtureSlug(slug || "");
 
-  if (!preview) {
+  // Fallback to mock data
+  const mockPreview = mockPreviews.find((p) => p.slug === slug);
+  
+  const isLoading = fixtureLoading || previewLoading;
+
+  // Determine what data to show
+  const hasRealFixture = !!fixture;
+  const hasPreview = !!preview || !!mockPreview;
+
+  // Get fixture details from either real or mock data
+  const fixtureData = hasRealFixture
+    ? {
+        homeTeam: fixture.home_team?.name || "TBD",
+        awayTeam: fixture.away_team?.name || "TBD",
+        kickoffAt: fixture.kickoff_at,
+        venue: fixture.venue,
+        league: fixture.league?.name || "",
+      }
+    : mockPreview
+    ? {
+        homeTeam: mockPreview.fixture.homeTeam.name,
+        awayTeam: mockPreview.fixture.awayTeam.name,
+        kickoffAt: mockPreview.fixture.kickoffAt,
+        venue: mockPreview.fixture.venue,
+        league: mockPreview.fixture.league.name,
+      }
+    : null;
+
+  // Get related tips (from mock data for now - tips are editorial content)
+  const relatedTips = mockPreview
+    ? mockTips.filter((t) => t.fixture.id === mockPreview.fixture.id)
+    : [];
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="container py-12 flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-brand-600" />
+        </div>
+      </Layout>
+    );
+  }
+
+  // No fixture or preview found
+  if (!fixtureData && !hasRealFixture) {
     return (
       <Layout>
         <div className="container py-12 text-center">
-          <h1 className="text-2xl font-bold text-ink-900 mb-2">Preview Not Found</h1>
-          <p className="text-ink-500 mb-4">The match preview you're looking for doesn't exist.</p>
-          <Link to="/predictions" className="btn-primary">
+          <h1 className="text-2xl font-bold text-ink-900 mb-2">Match Not Found</h1>
+          <p className="text-ink-500 mb-4">The match you're looking for doesn't exist.</p>
+          <Link to="/predictions" className="btn-primary inline-block px-6 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700">
             View All Predictions
           </Link>
         </div>
@@ -25,19 +72,23 @@ export default function MatchPreviewPage() {
     );
   }
 
-  const fixture = preview.fixture;
-  const kickoffTime = new Date(fixture.kickoffAt).toLocaleTimeString("en-GB", {
+  const displayData = fixtureData || {
+    homeTeam: fixture?.home_team?.name || "Team A",
+    awayTeam: fixture?.away_team?.name || "Team B",
+    kickoffAt: fixture?.kickoff_at || new Date().toISOString(),
+    venue: fixture?.venue,
+    league: fixture?.league?.name || "",
+  };
+
+  const kickoffTime = new Date(displayData.kickoffAt).toLocaleTimeString("en-GB", {
     hour: "2-digit",
     minute: "2-digit",
   });
-  const kickoffDate = new Date(fixture.kickoffAt).toLocaleDateString("en-GB", {
+  const kickoffDate = new Date(displayData.kickoffAt).toLocaleDateString("en-GB", {
     weekday: "long",
     day: "numeric",
     month: "long",
   });
-
-  // Get related tips
-  const relatedTips = mockTips.filter((t) => t.fixture.id === fixture.id);
 
   return (
     <Layout>
@@ -48,10 +99,10 @@ export default function MatchPreviewPage() {
             <span>{kickoffTime}</span>
             <span>•</span>
             <span>{kickoffDate}</span>
-            {fixture.venue && (
+            {displayData.venue && (
               <>
                 <span>•</span>
-                <span>{fixture.venue}</span>
+                <span>{displayData.venue}</span>
               </>
             )}
           </div>
@@ -60,10 +111,10 @@ export default function MatchPreviewPage() {
             <div className="text-center">
               <div className="w-16 h-16 md:w-24 md:h-24 bg-white/10 rounded-full mx-auto mb-2 flex items-center justify-center">
                 <span className="text-2xl md:text-3xl font-bold">
-                  {fixture.homeTeam.name.charAt(0)}
+                  {displayData.homeTeam.charAt(0)}
                 </span>
               </div>
-              <h2 className="font-bold text-lg md:text-xl">{fixture.homeTeam.name}</h2>
+              <h2 className="font-bold text-lg md:text-xl">{displayData.homeTeam}</h2>
               <div className="flex justify-center gap-1 mt-2">
                 {["W", "W", "D", "W", "L"].map((result, i) => (
                   <span
@@ -91,10 +142,10 @@ export default function MatchPreviewPage() {
             <div className="text-center">
               <div className="w-16 h-16 md:w-24 md:h-24 bg-white/10 rounded-full mx-auto mb-2 flex items-center justify-center">
                 <span className="text-2xl md:text-3xl font-bold">
-                  {fixture.awayTeam.name.charAt(0)}
+                  {displayData.awayTeam.charAt(0)}
                 </span>
               </div>
-              <h2 className="font-bold text-lg md:text-xl">{fixture.awayTeam.name}</h2>
+              <h2 className="font-bold text-lg md:text-xl">{displayData.awayTeam}</h2>
               <div className="flex justify-center gap-1 mt-2">
                 {["L", "W", "W", "D", "W"].map((result, i) => (
                   <span
@@ -120,11 +171,36 @@ export default function MatchPreviewPage() {
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Main content */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Intro */}
-            <div className="card-base p-6">
-              <h1 className="text-xl font-bold text-ink-900 mb-3">{preview.title}</h1>
-              <p className="text-ink-600">{preview.intro}</p>
-            </div>
+            {/* Intro - show if we have a preview */}
+            {(preview || mockPreview) && (
+              <div className="card-base p-6">
+                <h1 className="text-xl font-bold text-ink-900 mb-3">
+                  {preview?.title || mockPreview?.title}
+                </h1>
+                <p className="text-ink-600">
+                  {preview?.intro || mockPreview?.intro}
+                </p>
+              </div>
+            )}
+
+            {/* No preview yet message */}
+            {!preview && !mockPreview && hasRealFixture && (
+              <div className="card-base p-6 text-center border-warning-500/30 bg-warning-50">
+                <div className="flex items-center justify-center gap-2 text-warning-700 mb-2">
+                  <AlertCircle className="h-5 w-5" />
+                  <span className="font-semibold">No Preview Yet</span>
+                </div>
+                <p className="text-ink-600 mb-4">
+                  Our expert analysis for this match is coming soon. Check back closer to kick-off.
+                </p>
+                <Link
+                  to="/tips/bet-of-the-day"
+                  className="text-brand-600 hover:text-brand-700 font-medium"
+                >
+                  View All Tips →
+                </Link>
+              </div>
+            )}
 
             {/* Tips */}
             {relatedTips.map((tip) => (
@@ -143,8 +219,8 @@ export default function MatchPreviewPage() {
               />
             ))}
 
-            {/* If no tips, show placeholder */}
-            {relatedTips.length === 0 && (
+            {/* If no tips and we have a preview, show placeholder */}
+            {relatedTips.length === 0 && (preview || mockPreview) && (
               <div className="card-base p-6 text-center">
                 <p className="text-ink-500">No tips available for this match yet.</p>
                 <p className="text-sm text-ink-400 mt-1">Check back closer to kick-off.</p>

@@ -11,6 +11,7 @@ import NewsPage from "./pages/NewsPage";
 import ArticlePage from "./pages/ArticlePage";
 import FreeBetsPage from "./pages/FreeBetsPage";
 import RedirectPage from "./pages/RedirectPage";
+import AdminSyncPage from "./pages/AdminSyncPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ const App = () => (
           <Route path="/news/:slug" element={<ArticlePage />} />
           <Route path="/free-bets" element={<FreeBetsPage />} />
           <Route path="/r/:id" element={<RedirectPage />} />
+          <Route path="/admin/sync" element={<AdminSyncPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

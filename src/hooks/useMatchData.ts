@@ -10,6 +10,12 @@ export interface Fixture {
   status: string | null;
   season: string | null;
   round: string | null;
+  // Live score fields
+  home_score: number | null;
+  away_score: number | null;
+  phase: string | null;
+  phase_started_at: string | null;
+  base_minute: number | null;
   home_team: {
     id: string;
     name: string;
@@ -103,6 +109,11 @@ export function useUpcomingFixtures(options?: {
           status,
           season,
           round,
+          home_score,
+          away_score,
+          phase,
+          phase_started_at,
+          base_minute,
           home_team:teams!fixtures_home_team_id_fkey(id, name, slug),
           away_team:teams!fixtures_away_team_id_fkey(id, name, slug),
           league:leagues!fixtures_league_id_fkey(id, name, slug)
@@ -164,6 +175,11 @@ export function useFixturesByLeague(leagueSlug?: string | null) {
           kickoff_at,
           venue,
           status,
+          home_score,
+          away_score,
+          phase,
+          phase_started_at,
+          base_minute,
           home_team:teams!fixtures_home_team_id_fkey(id, name, slug),
           away_team:teams!fixtures_away_team_id_fkey(id, name, slug),
           league:leagues!fixtures_league_id_fkey(id, name, slug)
@@ -221,6 +237,11 @@ export function useFixtureBySlug(slug: string) {
           status,
           season,
           round,
+          home_score,
+          away_score,
+          phase,
+          phase_started_at,
+          base_minute,
           home_team:teams!fixtures_home_team_id_fkey(id, name, slug),
           away_team:teams!fixtures_away_team_id_fkey(id, name, slug),
           league:leagues!fixtures_league_id_fkey(id, name, slug)

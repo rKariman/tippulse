@@ -127,6 +127,8 @@ export default function AdminSyncPage() {
 
   const handleSyncToday = () => callSyncEndpoint("sync-today");
 
+  const handleSyncLive = () => callSyncEndpoint("sync-live");
+
   const handleSyncLeagues = () => callSyncEndpoint("sync-leagues");
 
   const handleSyncFixtures = () => {
@@ -194,7 +196,7 @@ export default function AdminSyncPage() {
           </Button>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
+        <div className="grid md:grid-cols-4 gap-6 mb-8">
           {/* Quick Sync */}
           <Card>
             <CardHeader>
@@ -215,6 +217,27 @@ export default function AdminSyncPage() {
                   <Calendar className="h-4 w-4 mr-2" />
                 )}
                 Sync Today + Tomorrow
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Live Sync */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Live Scores</CardTitle>
+              <CardDescription>
+                Update live match statuses and scores
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button
+                onClick={handleSyncLive}
+                disabled={loading}
+                variant="secondary"
+                className="w-full"
+              >
+                {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Sync Live Scores
               </Button>
             </CardContent>
           </Card>

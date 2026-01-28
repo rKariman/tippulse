@@ -12,10 +12,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTodayFixturesForTips, useGenerateAITips } from "@/hooks/useTodayTips";
 
 export default function HomePage() {
-  // Fetch real data - today's and tomorrow's matches
+  // Fetch real data - today's and tomorrow's matches with auto-refresh for live scores
   const { data: realFixtures, isLoading: fixturesLoading } = useUpcomingFixtures({ 
     limit: 10, 
     dateRange: "upcoming" 
+  });
+  // Re-fetch fixtures every 30 seconds to get latest live scores from Supabase
+  useQuery({
+    queryKey: ["fixtures", "live-refresh"],
+    queryFn: async () => Date.now(),
+    refetchInterval: 30000, // 30 seconds
+    refetchIntervalInBackground: false,
   });
   const { data: realLeagues } = useFeaturedLeagues();
   const { data: allLeagues } = useLeagues();
@@ -70,7 +77,7 @@ export default function HomePage() {
     });
   }
 
-  // Convert real fixtures to display format - ONLY show real data, no mock fallback
+  // Convert real fixtures to display format - includes live score fields
   const todayFixtures = (realFixtures || []).map((f) => ({
     id: f.id,
     homeTeam: f.home_team?.name || "TBD",
@@ -81,6 +88,12 @@ export default function HomePage() {
     venue: f.venue,
     slug: f.slug,
     previewSlug: previewMap.get(f.id) || f.slug,
+    // Live score fields
+    homeScore: f.home_score,
+    awayScore: f.away_score,
+    phase: f.phase,
+    phaseStartedAt: f.phase_started_at,
+    baseMinute: f.base_minute,
   }));
 
   // Get top 3 tips from AI tips for sidebar widget
@@ -180,6 +193,11 @@ export default function HomePage() {
                       league={fixture.league}
                       venue={fixture.venue}
                       previewSlug={fixture.previewSlug}
+                      homeScore={fixture.homeScore}
+                      awayScore={fixture.awayScore}
+                      phase={fixture.phase}
+                      phaseStartedAt={fixture.phaseStartedAt}
+                      baseMinute={fixture.baseMinute}
                     />
                   ))}
                 </div>

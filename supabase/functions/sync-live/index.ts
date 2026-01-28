@@ -1,8 +1,20 @@
 // sync-live: Updates live match status and scores with minimal API calls
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { corsHeaders, handleCors, validateCronToken } from '../_shared/cors.ts';
+import { corsHeaders, handleCors } from '../_shared/cors.ts';
 
 const API_FOOTBALL_BASE_URL = 'https://v3.football.api-sports.io';
+
+// Allowed league IDs (API-Football)
+const ALLOWED_LEAGUE_IDS = new Set([
+  '2',    // UEFA Champions League
+  '39',   // England Premier League
+  '140',  // Spain La Liga
+  '135',  // Italy Serie A
+  '78',   // Germany Bundesliga
+  '61',   // France Ligue 1
+  '307',  // Saudi Pro League
+  '290',  // Iran Persian Gulf Pro League
+]);
 
 // Phase mapping from API-Football status codes
 const STATUS_TO_PHASE: Record<string, string> = {
@@ -150,11 +162,15 @@ Deno.serve(async (req) => {
     const liveFromApi = apiData.response || [];
     console.log(`API returned ${liveFromApi.length} live fixtures`);
 
-    // Create a map of external_id -> api data
+    // Filter to only allowed leagues and create map
     const apiFixtureMap = new Map<string, any>();
     for (const fixture of liveFromApi) {
-      apiFixtureMap.set(String(fixture.fixture.id), fixture);
+      const leagueId = String(fixture.league?.id);
+      if (ALLOWED_LEAGUE_IDS.has(leagueId)) {
+        apiFixtureMap.set(String(fixture.fixture.id), fixture);
+      }
     }
+    console.log(`Filtered to ${apiFixtureMap.size} fixtures from allowed leagues`);
 
     let matchesUpdated = 0;
 

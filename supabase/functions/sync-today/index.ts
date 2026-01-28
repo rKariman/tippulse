@@ -23,6 +23,18 @@ function createSlug(name: string): string {
     .replace(/^-|-$/g, '');
 }
 
+// Allowed league IDs (API-Football)
+const ALLOWED_LEAGUE_IDS = new Set([
+  '2',    // UEFA Champions League
+  '39',   // England Premier League
+  '140',  // Spain La Liga
+  '135',  // Italy Serie A
+  '78',   // Germany Bundesliga
+  '61',   // France Ligue 1
+  '307',  // Saudi Pro League
+  '290',  // Iran Persian Gulf Pro League
+]);
+
 Deno.serve(async (req) => {
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
@@ -59,15 +71,22 @@ Deno.serve(async (req) => {
     const todayRome = getTodayInRome();
     console.log(`Fetching fixtures for today (Rome): ${todayRome}`);
 
-    // Step 1: Fetch ALL fixtures for today (SINGLE API CALL)
-    const fixtures = await provider.getFixturesByDateRange({
-      dateFrom: todayRome,
-      dateTo: todayRome,
-    });
+    // Fetch fixtures for each allowed league
+    let allFixtures: any[] = [];
+    for (const leagueId of ALLOWED_LEAGUE_IDS) {
+      const fixtures = await provider.getFixturesByDateRange({
+        dateFrom: todayRome,
+        dateTo: todayRome,
+        leagueId,
+      });
+      allFixtures = allFixtures.concat(fixtures);
+      // Rate limit between leagues
+      await new Promise(resolve => setTimeout(resolve, 200));
+    }
 
-    console.log(`API returned ${fixtures.length} fixtures for ${todayRome}`);
+    console.log(`API returned ${allFixtures.length} fixtures for allowed leagues on ${todayRome}`);
 
-    if (fixtures.length === 0) {
+    if (allFixtures.length === 0) {
       await logSyncRun(supabase, 'today', provider.providerName, { date: todayRome }, result);
       return new Response(
         JSON.stringify({ ...result, message: 'No fixtures found for today' }),
@@ -79,7 +98,10 @@ Deno.serve(async (req) => {
     const leagueDataMap = new Map<string, string>(); // extId -> name placeholder
     const teamDataMap = new Map<string, { name: string; leagueExtId: string }>();
     
-    for (const f of fixtures) {
+    for (const f of allFixtures) {
+      // Skip non-allowed leagues
+      if (!ALLOWED_LEAGUE_IDS.has(f.leagueExternalId)) continue;
+      
       leagueDataMap.set(f.leagueExternalId, `League ${f.leagueExternalId}`);
       if (f.homeTeamName) {
         teamDataMap.set(f.homeTeamExternalId, { name: f.homeTeamName, leagueExtId: f.leagueExternalId });
@@ -205,7 +227,9 @@ Deno.serve(async (req) => {
     console.log(`Upserted ${result.upsertedTeams} teams, have ${teamIdMap.size} team IDs`);
 
     // Step 4: Upsert fixtures
-    for (const fixture of fixtures) {
+    for (const fixture of allFixtures) {
+      // Skip non-allowed leagues
+      if (!ALLOWED_LEAGUE_IDS.has(fixture.leagueExternalId)) continue;
       const leagueId = leagueIdMap.get(fixture.leagueExternalId);
       const homeTeamId = teamIdMap.get(fixture.homeTeamExternalId);
       const awayTeamId = teamIdMap.get(fixture.awayTeamExternalId);
@@ -262,7 +286,7 @@ Deno.serve(async (req) => {
 
     console.log(`Sync complete: ${result.upsertedLeagues} leagues, ${result.upsertedTeams} teams, ${result.upsertedFixtures} fixtures`);
 
-    await logSyncRun(supabase, 'today', provider.providerName, { date: todayRome, fixturesFromApi: fixtures.length }, result);
+    await logSyncRun(supabase, 'today', provider.providerName, { date: todayRome, fixturesFromApi: allFixtures.length }, result);
 
     return new Response(
       JSON.stringify(result),

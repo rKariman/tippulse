@@ -150,12 +150,12 @@ export default function PredictionsPage() {
               <div className="text-center py-12 bg-surface border border-ink-200 rounded-xl">
                 <Trophy size={32} className="mx-auto text-ink-300 mb-3" />
                 <p className="text-ink-500">
-                  {dateFilter === "today" && "No matches found for today."}
-                  {dateFilter === "tomorrow" && "No matches found for tomorrow."}
-                  {dateFilter === "upcoming" && "No upcoming matches found."}
+                  {dateFilter === "today" && "No matches from featured leagues today."}
+                  {dateFilter === "tomorrow" && "No matches from featured leagues tomorrow."}
+                  {dateFilter === "upcoming" && "No upcoming matches from featured leagues."}
                 </p>
                 <p className="text-sm text-ink-400 mt-1">
-                  Check back later or run sync from admin to fetch latest matches.
+                  Only matches from Premier League, La Liga, Serie A, Bundesliga, Ligue 1, Champions League, Saudi Pro League, and Persian Gulf Pro League are shown.
                 </p>
               </div>
             )}

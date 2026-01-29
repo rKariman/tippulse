@@ -80,47 +80,30 @@ export function useFeaturedLeagues() {
   });
 }
 
-// Helper to get date boundaries in Europe/Rome timezone
-function getRomeDateBoundaries() {
-  // Get current time formatted as Europe/Rome
+// Helper to get date boundaries in client's local timezone
+function getLocalDateBoundaries() {
   const now = new Date();
-  const romeFormatter = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Europe/Rome',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  });
-  const romeDateStr = romeFormatter.format(now); // YYYY-MM-DD in Rome
   
-  // Create date boundaries at midnight Rome time
-  // Rome is UTC+1 (winter) or UTC+2 (summer)
-  const todayRome = new Date(`${romeDateStr}T00:00:00+01:00`);
+  // Get today at midnight in local timezone
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   
-  // Adjust for DST - check if we're in summer time
-  const jan = new Date(now.getFullYear(), 0, 1);
-  const jul = new Date(now.getFullYear(), 6, 1);
-  const stdOffset = Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset());
-  const romeNow = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Rome' }));
-  const isDST = romeNow.getTimezoneOffset() < stdOffset;
+  // Tomorrow at midnight
+  const tomorrowStart = new Date(todayStart);
+  tomorrowStart.setDate(tomorrowStart.getDate() + 1);
   
-  // Use correct offset
-  const offset = isDST ? '+02:00' : '+01:00';
-  const todayStart = new Date(`${romeDateStr}T00:00:00${offset}`);
+  // Day+2 at midnight
+  const day2Start = new Date(todayStart);
+  day2Start.setDate(day2Start.getDate() + 2);
   
-  const tomorrowDate = new Date(todayStart);
-  tomorrowDate.setDate(tomorrowDate.getDate() + 1);
-  
-  const day2 = new Date(todayStart);
-  day2.setDate(day2.getDate() + 2);
-  
-  const day8 = new Date(todayStart);
-  day8.setDate(day8.getDate() + 8);
+  // Day+8 at midnight (7 days from tomorrow = upcoming range end)
+  const day8Start = new Date(todayStart);
+  day8Start.setDate(day8Start.getDate() + 8);
   
   return {
     todayStart: todayStart.toISOString(),
-    tomorrowStart: tomorrowDate.toISOString(),
-    day2Start: day2.toISOString(),
-    day8Start: day8.toISOString(),
+    tomorrowStart: tomorrowStart.toISOString(),
+    day2Start: day2Start.toISOString(),
+    day8Start: day8Start.toISOString(),
   };
 }
 
@@ -134,7 +117,7 @@ export function useUpcomingFixtures(options?: {
   return useQuery({
     queryKey: ["fixtures", "upcoming", leagueSlug, dateRange, limit],
     queryFn: async () => {
-      const { todayStart, tomorrowStart, day2Start, day8Start } = getRomeDateBoundaries();
+      const { todayStart, tomorrowStart, day2Start, day8Start } = getLocalDateBoundaries();
 
       let query = supabase
         .from("fixtures")
@@ -158,7 +141,7 @@ export function useUpcomingFixtures(options?: {
         .order("kickoff_at", { ascending: true })
         .limit(limit);
 
-      // Date filtering based on Europe/Rome timezone
+      // Date filtering based on client's local timezone
       if (dateRange === "today") {
         // Today: [todayStart, tomorrowStart)
         query = query
@@ -202,7 +185,7 @@ export function useFixturesByLeague(leagueSlug?: string | null, dateRange?: "tod
   return useQuery({
     queryKey: ["fixtures", "by-league", leagueSlug, dateRange],
     queryFn: async () => {
-      const { todayStart, tomorrowStart, day2Start, day8Start } = getRomeDateBoundaries();
+      const { todayStart, tomorrowStart, day2Start, day8Start } = getLocalDateBoundaries();
 
       let startDate: string;
       let endDate: string;

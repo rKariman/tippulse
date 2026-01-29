@@ -202,6 +202,16 @@ export function useFixturesByLeague(leagueSlug?: string | null, dateRange?: "tod
         endDate = day8Start;
       }
 
+      // DEBUG: Log the exact query boundaries
+      console.log(`[useFixturesByLeague] dateRange=${dateRange}`);
+      console.log(`[useFixturesByLeague] Boundaries (local):`);
+      console.log(`  todayStart: ${new Date(todayStart).toString()}`);
+      console.log(`  tomorrowStart: ${new Date(tomorrowStart).toString()}`);
+      console.log(`  day2Start: ${new Date(day2Start).toString()}`);
+      console.log(`[useFixturesByLeague] Query range (UTC ISO):`);
+      console.log(`  startDate: ${startDate}`);
+      console.log(`  endDate: ${endDate}`);
+
       let query = supabase
         .from("fixtures")
         .select(`
@@ -236,10 +246,21 @@ export function useFixturesByLeague(leagueSlug?: string | null, dateRange?: "tod
       }
 
       const { data, error } = await query;
+      
+      // DEBUG: Log the results
+      console.log(`[useFixturesByLeague] Query returned ${data?.length || 0} fixtures`);
+      if (data && data.length > 0) {
+        console.log(`[useFixturesByLeague] First 5 fixtures:`);
+        data.slice(0, 5).forEach((f: any, i: number) => {
+          console.log(`  ${i + 1}. ${f.home_team?.name} vs ${f.away_team?.name} @ ${f.kickoff_at} (status: ${f.status})`);
+        });
+      }
+      
       if (error) throw error;
 
-      // Group by league
+      // Group by league - ONLY include fixtures that have a league (from allowed leagues)
       const grouped: Record<string, { league: League; fixtures: Fixture[] }> = {};
+      let skippedNoLeague = 0;
       (data as Fixture[]).forEach((fixture) => {
         if (fixture.league) {
           const leagueName = fixture.league.name;
@@ -250,8 +271,12 @@ export function useFixturesByLeague(leagueSlug?: string | null, dateRange?: "tod
             };
           }
           grouped[leagueName].fixtures.push(fixture);
+        } else {
+          skippedNoLeague++;
         }
       });
+
+      console.log(`[useFixturesByLeague] Grouped into ${Object.keys(grouped).length} leagues (skipped ${skippedNoLeague} fixtures without league)`);
 
       return Object.values(grouped);
     },

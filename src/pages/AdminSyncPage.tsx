@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, RefreshCw, Calendar, Shield } from "lucide-react";
+import { FixtureDebugWidget } from "@/components/admin/FixtureDebugWidget";
 
 interface SyncRun {
   id: string;
@@ -326,6 +327,11 @@ export default function AdminSyncPage() {
               </Button>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Debug Widget */}
+        <div className="mb-8">
+          <FixtureDebugWidget />
         </div>
 
         {/* Sync History */}

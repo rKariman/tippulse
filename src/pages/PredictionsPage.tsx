@@ -149,8 +149,14 @@ export default function PredictionsPage() {
             {!isLoading && displayGroups.length === 0 && (
               <div className="text-center py-12 bg-surface border border-ink-200 rounded-xl">
                 <Trophy size={32} className="mx-auto text-ink-300 mb-3" />
-                <p className="text-ink-500">No matches found for today.</p>
-                <p className="text-sm text-ink-400 mt-1">Run sync from /admin/sync to fetch matches.</p>
+                <p className="text-ink-500">
+                  {dateFilter === "today" && "No matches found for today."}
+                  {dateFilter === "tomorrow" && "No matches found for tomorrow."}
+                  {dateFilter === "upcoming" && "No upcoming matches found."}
+                </p>
+                <p className="text-sm text-ink-400 mt-1">
+                  Check back later or run sync from admin to fetch latest matches.
+                </p>
               </div>
             )}
           </div>

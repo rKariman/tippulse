@@ -31,9 +31,33 @@ function useLastSyncRun() {
   });
 }
 
+// Hook to fetch last tip generation runs
+function useTipGenerationRuns() {
+  return useQuery({
+    queryKey: ["tip-generation-runs"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("tip_generation_runs")
+        .select("*")
+        .order("started_at", { ascending: false })
+        .limit(10);
+      
+      if (error) throw error;
+      
+      // Get last warm_cache and last cleanup
+      const warmCache = data?.find((r: any) => r.run_type === "warm_cache");
+      const cleanup = data?.find((r: any) => r.run_type === "cleanup");
+      
+      return { warmCache, cleanup };
+    },
+    staleTime: 30000,
+  });
+}
+
 export function DateFilterDebug({ todayCount, tomorrowCount, upcomingCount }: DateFilterDebugProps) {
   const { isAdmin } = useAuth();
   const { data: lastSync } = useLastSyncRun();
+  const { data: tipRuns } = useTipGenerationRuns();
   const { data: fixtureCounts } = useFixtureCounts();
 
   const boundaries = useMemo(() => getLocalDateBoundaries(), []);
@@ -66,14 +90,16 @@ export function DateFilterDebug({ todayCount, tomorrowCount, upcomingCount }: Da
   };
 
   const syncParams = lastSync?.params as Record<string, unknown> | null;
+  const warmCacheRun = tipRuns?.warmCache as Record<string, unknown> | null;
+  const cleanupRun = tipRuns?.cleanup as Record<string, unknown> | null;
 
   return (
     <div className="bg-amber-50 border border-amber-300 rounded-lg p-3 text-xs font-mono text-amber-900 mb-4">
-      <div className="font-semibold mb-2 text-amber-800">🛠 Admin Debug: Date Filtering & Sync</div>
+      <div className="font-semibold mb-2 text-amber-800">🛠 Admin Debug: Sync & Tips Cache</div>
       
       {/* Last Sync Info */}
       <div className="bg-amber-100 rounded p-2 mb-3">
-        <div className="font-semibold text-amber-700 mb-1">Last Sync Run</div>
+        <div className="font-semibold text-amber-700 mb-1">📅 Last Fixtures Sync</div>
         <div className="grid gap-1">
           <div>
             <span className="text-amber-600">Time:</span> {formatSyncTime(lastSync?.created_at ?? null)}
@@ -90,6 +116,48 @@ export function DateFilterDebug({ todayCount, tomorrowCount, upcomingCount }: Da
             <div className="text-red-600">Error: {lastSync.error}</div>
           )}
         </div>
+      </div>
+
+      {/* Warm Cache Info */}
+      <div className="bg-green-100 rounded p-2 mb-3">
+        <div className="font-semibold text-green-700 mb-1">🔥 Last Warm Cache Run</div>
+        {warmCacheRun ? (
+          <div className="grid gap-1">
+            <div>
+              <span className="text-green-600">Time:</span> {formatSyncTime(warmCacheRun.finished_at as string | null)}
+            </div>
+            <div>
+              <span className="text-green-600">Total:</span> {String(warmCacheRun.total_fixtures ?? 0)} fixtures
+            </div>
+            <div>
+              <span className="text-green-600">Generated:</span> {String(warmCacheRun.generated ?? 0)} |{" "}
+              <span className="text-green-600">Reused:</span> {String(warmCacheRun.reused ?? 0)} |{" "}
+              <span className="text-green-600">Errors:</span> {String(warmCacheRun.errors ?? 0)}
+            </div>
+            {warmCacheRun.error_details && (
+              <div className="text-red-600 text-xs truncate">Errors: {String(warmCacheRun.error_details)}</div>
+            )}
+          </div>
+        ) : (
+          <div className="text-green-600">No warm cache runs yet</div>
+        )}
+      </div>
+
+      {/* Cleanup Info */}
+      <div className="bg-blue-100 rounded p-2 mb-3">
+        <div className="font-semibold text-blue-700 mb-1">🧹 Last Cleanup Run</div>
+        {cleanupRun ? (
+          <div className="grid gap-1">
+            <div>
+              <span className="text-blue-600">Time:</span> {formatSyncTime(cleanupRun.finished_at as string | null)}
+            </div>
+            <div>
+              <span className="text-blue-600">Deleted:</span> {String(cleanupRun.deleted ?? 0)} old tips
+            </div>
+          </div>
+        ) : (
+          <div className="text-blue-600">No cleanup runs yet</div>
+        )}
       </div>
 
       {/* Client Timezone Info */}

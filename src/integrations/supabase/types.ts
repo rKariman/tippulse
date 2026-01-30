@@ -705,6 +705,48 @@ export type Database = {
           },
         ]
       }
+      tip_generation_runs: {
+        Row: {
+          deleted: number | null
+          error_details: string | null
+          errors: number | null
+          finished_at: string | null
+          generated: number | null
+          id: string
+          params: Json | null
+          reused: number | null
+          run_type: string
+          started_at: string
+          total_fixtures: number | null
+        }
+        Insert: {
+          deleted?: number | null
+          error_details?: string | null
+          errors?: number | null
+          finished_at?: string | null
+          generated?: number | null
+          id?: string
+          params?: Json | null
+          reused?: number | null
+          run_type?: string
+          started_at?: string
+          total_fixtures?: number | null
+        }
+        Update: {
+          deleted?: number | null
+          error_details?: string | null
+          errors?: number | null
+          finished_at?: string | null
+          generated?: number | null
+          id?: string
+          params?: Json | null
+          reused?: number | null
+          run_type?: string
+          started_at?: string
+          total_fixtures?: number | null
+        }
+        Relationships: []
+      }
       tips: {
         Row: {
           created_at: string | null

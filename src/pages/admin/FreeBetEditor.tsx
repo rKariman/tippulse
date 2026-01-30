@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { ArrowLeft, Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
+import { isValidRedirectUrl } from "@/lib/urlValidation";
 
 function generateSlug(title: string): string {
   return title
@@ -109,6 +110,11 @@ export default function FreeBetEditor() {
   // Save mutation
   const saveMutation = useMutation({
     mutationFn: async () => {
+      // Validate target URL before saving
+      if (!isValidRedirectUrl(targetUrl)) {
+        throw new Error("Invalid URL: Only http:// and https:// URLs are allowed");
+      }
+      
       const uniqueSlug = await checkSlugUnique(slug, isNew ? undefined : id);
       
       const data = {

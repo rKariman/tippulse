@@ -1,12 +1,13 @@
 import { Link } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
+import { TeamLogo } from "@/components/TeamLogo";
 
 interface NextUpFixture {
   id: string;
   slug: string;
   kickoff_at: string;
-  home_team?: { name: string } | null;
-  away_team?: { name: string } | null;
+  home_team?: { name: string; logo_url?: string | null } | null;
+  away_team?: { name: string; logo_url?: string | null } | null;
 }
 
 interface NextUpCarouselProps {
@@ -44,14 +45,20 @@ export function NextUpCarousel({ fixtures, previewMap }: NextUpCarouselProps) {
                   index === 0 ? "border-l border-ink-200" : ""
                 }`}
               >
-                {/* Team logos placeholder */}
+                {/* Team logos */}
                 <div className="flex items-center gap-1">
-                  <div className="w-6 h-6 bg-ink-200 rounded-full flex items-center justify-center text-xs font-bold text-ink-500">
-                    {fixture.home_team?.name?.charAt(0) || "H"}
-                  </div>
-                  <div className="w-6 h-6 bg-ink-200 rounded-full flex items-center justify-center text-xs font-bold text-ink-500">
-                    {fixture.away_team?.name?.charAt(0) || "A"}
-                  </div>
+                  <TeamLogo
+                    logoUrl={fixture.home_team?.logo_url}
+                    teamName={fixture.home_team?.name || "Home"}
+                    size="sm"
+                    className="w-6 h-6"
+                  />
+                  <TeamLogo
+                    logoUrl={fixture.away_team?.logo_url}
+                    teamName={fixture.away_team?.name || "Away"}
+                    size="sm"
+                    className="w-6 h-6"
+                  />
                 </div>
 
                 <div className="min-w-0">

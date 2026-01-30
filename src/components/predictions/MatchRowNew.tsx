@@ -1,10 +1,13 @@
 import { Link } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
+import { TeamLogo } from "@/components/TeamLogo";
 
 interface MatchRowNewProps {
   id: string;
   homeTeam: string;
   awayTeam: string;
+  homeTeamLogoUrl?: string | null;
+  awayTeamLogoUrl?: string | null;
   kickoffAt: string;
   previewSlug: string;
   broadcast?: string;
@@ -15,6 +18,8 @@ export function MatchRowNew({
   id,
   homeTeam,
   awayTeam,
+  homeTeamLogoUrl,
+  awayTeamLogoUrl,
   kickoffAt,
   previewSlug,
   broadcast,
@@ -29,12 +34,8 @@ export function MatchRowNew({
     <div className="flex items-center gap-4 p-4 hover:bg-ink-50 transition-colors">
       {/* Team Logos */}
       <div className="flex flex-col items-center gap-1 shrink-0">
-        <div className="w-8 h-8 bg-ink-100 rounded-full flex items-center justify-center text-sm font-bold text-ink-500">
-          {homeTeam.charAt(0)}
-        </div>
-        <div className="w-8 h-8 bg-ink-100 rounded-full flex items-center justify-center text-sm font-bold text-ink-500">
-          {awayTeam.charAt(0)}
-        </div>
+        <TeamLogo logoUrl={homeTeamLogoUrl} teamName={homeTeam} size="sm" />
+        <TeamLogo logoUrl={awayTeamLogoUrl} teamName={awayTeam} size="sm" />
       </div>
 
       {/* Team Names */}

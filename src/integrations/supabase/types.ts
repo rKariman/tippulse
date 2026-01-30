@@ -671,6 +671,7 @@ export type Database = {
           id: string
           last_synced_at: string | null
           league_id: string | null
+          logo_url: string | null
           name: string
           provider: string | null
           slug: string
@@ -681,6 +682,7 @@ export type Database = {
           id?: string
           last_synced_at?: string | null
           league_id?: string | null
+          logo_url?: string | null
           name: string
           provider?: string | null
           slug: string
@@ -691,6 +693,7 @@ export type Database = {
           id?: string
           last_synced_at?: string | null
           league_id?: string | null
+          logo_url?: string | null
           name?: string
           provider?: string | null
           slug?: string

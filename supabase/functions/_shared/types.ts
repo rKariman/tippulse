@@ -13,6 +13,7 @@ export interface Team {
   name: string;
   shortName?: string;
   crest?: string;
+  logoUrl?: string;
   leagueExternalId?: string;
 }
 
@@ -23,6 +24,8 @@ export interface Fixture {
   awayTeamExternalId: string;
   homeTeamName?: string;
   awayTeamName?: string;
+  homeTeamLogo?: string;
+  awayTeamLogo?: string;
   kickoffAt: string;
   venue?: string;
   status: 'scheduled' | 'in_play' | 'finished' | 'postponed' | 'cancelled';

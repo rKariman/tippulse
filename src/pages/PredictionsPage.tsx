@@ -117,6 +117,8 @@ export default function PredictionsPage() {
                         id={fixture.id}
                         homeTeam={fixture.home_team?.name || "TBD"}
                         awayTeam={fixture.away_team?.name || "TBD"}
+                        homeTeamLogoUrl={fixture.home_team?.logo_url}
+                        awayTeamLogoUrl={fixture.away_team?.logo_url}
                         kickoffAt={fixture.kickoff_at}
                         previewSlug={previewMap.get(fixture.id) || fixture.slug}
                         linkText={`See All ${group.league.name} Predictions`}

@@ -9,6 +9,7 @@ import HomePage from "./pages/HomePage";
 import TipsPage from "./pages/TipsPage";
 import PredictionsPage from "./pages/PredictionsPage";
 import MatchPreviewPage from "./pages/MatchPreviewPage";
+import MatchDetailsPage from "./pages/MatchDetailsPage";
 import NewsPage from "./pages/NewsPage";
 import ArticlePage from "./pages/ArticlePage";
 import FreeBetsPage from "./pages/FreeBetsPage";
@@ -33,7 +34,8 @@ const App = () => (
             <Route path="/" element={<HomePage />} />
             <Route path="/tips/:market" element={<TipsPage />} />
             <Route path="/predictions" element={<PredictionsPage />} />
-            <Route path="/match/:slug" element={<MatchPreviewPage />} />
+            <Route path="/match/:slug" element={<MatchDetailsPage />} />
+            <Route path="/preview/:slug" element={<MatchPreviewPage />} />
             <Route path="/news" element={<NewsPage />} />
             <Route path="/news/:slug" element={<ArticlePage />} />
             <Route path="/free-bets" element={<FreeBetsPage />} />

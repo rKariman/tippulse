@@ -317,6 +317,50 @@ export type Database = {
         }
         Relationships: []
       }
+      match_tips: {
+        Row: {
+          confidence: string
+          created_at: string
+          expires_at: string
+          fixture_id: string
+          id: string
+          odds: string | null
+          reasoning: string
+          tip_type: string
+          title: string
+        }
+        Insert: {
+          confidence: string
+          created_at?: string
+          expires_at?: string
+          fixture_id: string
+          id?: string
+          odds?: string | null
+          reasoning: string
+          tip_type: string
+          title: string
+        }
+        Update: {
+          confidence?: string
+          created_at?: string
+          expires_at?: string
+          fixture_id?: string
+          id?: string
+          odds?: string | null
+          reasoning?: string
+          tip_type?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_tips_fixture_id_fkey"
+            columns: ["fixture_id"]
+            isOneToOne: false
+            referencedRelation: "fixtures"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       news_posts: {
         Row: {
           content: string
@@ -441,6 +485,47 @@ export type Database = {
           user_agent?: string | null
         }
         Relationships: []
+      }
+      player_tips: {
+        Row: {
+          confidence: string
+          created_at: string
+          expires_at: string
+          fixture_id: string
+          id: string
+          player_name: string
+          reasoning: string
+          title: string
+        }
+        Insert: {
+          confidence: string
+          created_at?: string
+          expires_at?: string
+          fixture_id: string
+          id?: string
+          player_name: string
+          reasoning: string
+          title: string
+        }
+        Update: {
+          confidence?: string
+          created_at?: string
+          expires_at?: string
+          fixture_id?: string
+          id?: string
+          player_name?: string
+          reasoning?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_tips_fixture_id_fkey"
+            columns: ["fixture_id"]
+            isOneToOne: false
+            referencedRelation: "fixtures"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       preview_tips: {
         Row: {

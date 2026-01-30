@@ -13,9 +13,9 @@ import { useTodayFixturesForTips, useGenerateAITips } from "@/hooks/useTodayTips
 
 export default function HomePage() {
   // Fetch real data - today's and tomorrow's matches with auto-refresh for live scores
-  const { data: realFixtures, isLoading: fixturesLoading } = useUpcomingFixtures({ 
-    limit: 10, 
-    dateRange: "upcoming" 
+  const { data: realFixtures, isLoading: fixturesLoading } = useUpcomingFixtures({
+    limit: 10,
+    dateRange: "upcoming",
   });
   // Re-fetch fixtures every 30 seconds to get latest live scores from Supabase
   useQuery({
@@ -65,9 +65,7 @@ export default function HomePage() {
 
   // Use real leagues if available - fallback to top leagues by fixture count
   const hasRealFeaturedLeagues = realLeagues && realLeagues.length > 0;
-  const featuredLeagues = hasRealFeaturedLeagues 
-    ? realLeagues 
-    : (allLeagues || []).slice(0, 5);
+  const featuredLeagues = hasRealFeaturedLeagues ? realLeagues : (allLeagues || []).slice(0, 5);
 
   // Create a map of fixture IDs to preview slugs
   const previewMap = new Map<string, string>();
@@ -113,13 +111,14 @@ export default function HomePage() {
               Free Football Betting Tips & Predictions
             </h1>
             <p className="text-brand-200 text-fluid-sm max-w-2xl">
-              Expert tips from our team of professional tipsters. Get daily predictions, accumulators, and match previews for all major leagues.
+              Expert tips from our team of professional tipsters. Get daily predictions, accumulators, and match
+              previews for all major leagues.
             </p>
             <div className="flex flex-wrap gap-3 mt-4">
               <Link to="/tips/bet-of-the-day" className="btn-cta">
                 Today's Tips
               </Link>
-              <Link to="/predictions" className="btn-secondary bg-white/10 border-white/20 text-white hover:bg-white/20">
+              <Link to="/predictions" className="font-semibold text-fluid-sm">
                 Match Predictions
               </Link>
             </div>
@@ -286,19 +285,34 @@ export default function HomePage() {
             <div className="card-base overflow-hidden">
               <div className="widget-header">Quick Links</div>
               <div className="p-fluid-md space-y-2">
-                <Link to="/tips/acca" className="block py-2 px-3 text-fluid-sm text-ink-700 hover:bg-ink-50 rounded-lg transition-colors">
+                <Link
+                  to="/tips/acca"
+                  className="block py-2 px-3 text-fluid-sm text-ink-700 hover:bg-ink-50 rounded-lg transition-colors"
+                >
                   Accumulator Tips
                 </Link>
-                <Link to="/tips/btts" className="block py-2 px-3 text-fluid-sm text-ink-700 hover:bg-ink-50 rounded-lg transition-colors">
+                <Link
+                  to="/tips/btts"
+                  className="block py-2 px-3 text-fluid-sm text-ink-700 hover:bg-ink-50 rounded-lg transition-colors"
+                >
                   Both Teams to Score
                 </Link>
-                <Link to="/tips/correct-score" className="block py-2 px-3 text-fluid-sm text-ink-700 hover:bg-ink-50 rounded-lg transition-colors">
+                <Link
+                  to="/tips/correct-score"
+                  className="block py-2 px-3 text-fluid-sm text-ink-700 hover:bg-ink-50 rounded-lg transition-colors"
+                >
                   Correct Score Tips
                 </Link>
-                <Link to="/predictions" className="block py-2 px-3 text-fluid-sm text-ink-700 hover:bg-ink-50 rounded-lg transition-colors">
+                <Link
+                  to="/predictions"
+                  className="block py-2 px-3 text-fluid-sm text-ink-700 hover:bg-ink-50 rounded-lg transition-colors"
+                >
                   Match Predictions
                 </Link>
-                <Link to="/free-bets" className="block py-2 px-3 text-fluid-sm text-ink-700 hover:bg-ink-50 rounded-lg transition-colors">
+                <Link
+                  to="/free-bets"
+                  className="block py-2 px-3 text-fluid-sm text-ink-700 hover:bg-ink-50 rounded-lg transition-colors"
+                >
                   Free Bets
                 </Link>
               </div>

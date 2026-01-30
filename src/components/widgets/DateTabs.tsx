@@ -16,7 +16,7 @@ export function DateTabs({ selected, onChange }: DateTabsProps) {
         <button
           key={tab.value}
           onClick={() => onChange(tab.value)}
-          className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+          className={`flex-1 px-fluid-sm py-2 text-fluid-sm font-medium rounded-md transition-colors ${
             selected === tab.value
               ? "bg-white text-brand-600 shadow-soft"
               : "text-ink-600 hover:text-ink-900"

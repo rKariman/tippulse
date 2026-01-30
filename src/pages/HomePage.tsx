@@ -326,7 +326,6 @@ export default function HomePage() {
                             {new Date(fixture.kickoff_at).toLocaleTimeString("en-GB", {
                               hour: "2-digit",
                               minute: "2-digit",
-                              timeZone: "Europe/Rome",
                             })}
                           </span>
                         </div>

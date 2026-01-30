@@ -20,7 +20,8 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json().catch(() => ({}));
-    const { dateFrom, dateTo, leagueId } = body;
+    const { dateFrom, dateTo } = body;
+    const leagueIdRaw = body?.leagueId;
 
     if (!dateFrom || !dateTo) {
       return new Response(
@@ -28,6 +29,16 @@ Deno.serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    // league must be ONE integer per API request. If we receive a list (e.g. "2,39" or "[2,39]"), split it.
+    const requestedLeagueIds: string[] = (() => {
+      if (!leagueIdRaw) return [];
+      const raw = String(leagueIdRaw).trim();
+      if (!raw) return [];
+      const cleaned = raw.replace(/[\[\]\s]/g, '');
+      const parts = cleaned.split(',').filter(Boolean);
+      return parts.filter((p) => /^\d+$/.test(p));
+    })();
 
     const apiKey = Deno.env.get('API_FOOTBALL_KEY');
     if (!apiKey) {
@@ -54,12 +65,12 @@ Deno.serve(async (req) => {
 
     const leagueIdMap = new Map<string, string>();
     (leagues || []).forEach((l: any) => {
-      if (l.external_id) leagueIdMap.set(l.external_id, l.id);
+      if (l.external_id) leagueIdMap.set(String(l.external_id), l.id);
     });
 
     const teamIdMap = new Map<string, string>();
     (teams || []).forEach((t: any) => {
-      if (t.external_id) teamIdMap.set(t.external_id, t.id);
+      if (t.external_id) teamIdMap.set(String(t.external_id), t.id);
     });
 
     const result: SyncResult = {
@@ -69,28 +80,138 @@ Deno.serve(async (req) => {
       upsertedFixtures: 0,
     };
 
-    // Fetch fixtures
-    const fixtures = await provider.getFixturesByDateRange({
-      dateFrom,
-      dateTo,
-      leagueId,
-    });
+    // Allowed league IDs (API-Football)
+    const allowedLeagueIds = new Set(['2', '39', '61', '78', '135', '140', '290', '307']);
+    const leagueIdsToSync = requestedLeagueIds.length > 0 ? requestedLeagueIds : Array.from(allowedLeagueIds);
 
-    for (const fixture of fixtures) {
-      const fixtureId = await upsertFixture(
-        supabase,
-        fixture,
-        provider.providerName,
-        leagueIdMap,
-        teamIdMap
-      );
-      if (fixtureId) {
-        result.upsertedFixtures++;
+    // Fetch fixtures (ONE league per request; season computed per date inside provider)
+    let fetchedCount = 0;
+    let filteredAllowedCount = 0;
+    let upsertedFixturesCount = 0;
+
+    for (const leagueId of leagueIdsToSync) {
+      console.log(`[sync-fixtures] league=${leagueId} dateFrom=${dateFrom} dateTo=${dateTo}`);
+      const fixtures = await provider.getFixturesByDateRange({
+        dateFrom,
+        dateTo,
+        leagueId,
+      });
+
+      fetchedCount += fixtures.length;
+
+      const filtered = fixtures.filter((f) => allowedLeagueIds.has(f.leagueExternalId));
+      filteredAllowedCount += filtered.length;
+
+      for (const fixture of filtered) {
+        // Ensure league exists (otherwise fixtures end up with null league_id and UI groups become empty)
+        if (!leagueIdMap.has(fixture.leagueExternalId)) {
+          const leagueExtId = fixture.leagueExternalId;
+          const slug = `league-${leagueExtId}`;
+          const { data: existing } = await supabase
+            .from('leagues')
+            .select('id')
+            .eq('external_id', leagueExtId)
+            .eq('provider', provider.providerName)
+            .maybeSingle();
+
+          if (existing) {
+            leagueIdMap.set(leagueExtId, (existing as any).id);
+          } else {
+            const { data: inserted } = await supabase
+              .from('leagues')
+              .insert({
+                external_id: leagueExtId,
+                provider: provider.providerName,
+                name: `League ${leagueExtId}`,
+                slug,
+                sport: 'football',
+                last_synced_at: new Date().toISOString(),
+              } as any)
+              .select('id')
+              .single();
+            if (inserted) {
+              leagueIdMap.set(leagueExtId, (inserted as any).id);
+              result.upsertedLeagues++;
+            }
+          }
+        }
+
+        // Ensure teams exist (otherwise upsertFixture will skip)
+        const ensureTeam = async (teamExtId: string, teamName: string, leagueExtId: string) => {
+          if (teamIdMap.has(teamExtId)) return;
+          const leagueId = leagueIdMap.get(leagueExtId);
+          const { data: existing } = await supabase
+            .from('teams')
+            .select('id')
+            .eq('external_id', teamExtId)
+            .eq('provider', provider.providerName)
+            .maybeSingle();
+          if (existing) {
+            teamIdMap.set(teamExtId, (existing as any).id);
+            return;
+          }
+          const slug = teamName
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-|-$/g, '');
+
+          const { data: inserted } = await supabase
+            .from('teams')
+            .insert({
+              external_id: teamExtId,
+              provider: provider.providerName,
+              name: teamName,
+              slug: `${slug}-${teamExtId}`,
+              league_id: leagueId,
+              last_synced_at: new Date().toISOString(),
+            } as any)
+            .select('id')
+            .single();
+
+          if (inserted) {
+            teamIdMap.set(teamExtId, (inserted as any).id);
+            result.upsertedTeams++;
+          }
+        };
+
+        await ensureTeam(fixture.homeTeamExternalId, fixture.homeTeamName || 'Home', fixture.leagueExternalId);
+        await ensureTeam(fixture.awayTeamExternalId, fixture.awayTeamName || 'Away', fixture.leagueExternalId);
+
+        const fixtureId = await upsertFixture(
+          supabase,
+          fixture,
+          provider.providerName,
+          leagueIdMap,
+          teamIdMap
+        );
+
+        if (fixtureId) {
+          result.upsertedFixtures++;
+          upsertedFixturesCount++;
+        }
       }
     }
 
+    console.log(
+      `[sync-fixtures] fetchedCount=${fetchedCount} filteredAllowedCount=${filteredAllowedCount} upsertedFixturesCount=${upsertedFixturesCount}`
+    );
+
     // Log sync run
-    await logSyncRun(supabase, 'fixtures', provider.providerName, { dateFrom, dateTo, leagueId }, result);
+    await logSyncRun(
+      supabase,
+      'fixtures',
+      provider.providerName,
+      {
+        dateFrom,
+        dateTo,
+        leagueIdRaw,
+        requestedLeagueIds,
+        fetchedCount,
+        filteredAllowedCount,
+        upsertedFixturesCount,
+      },
+      result
+    );
 
     return new Response(
       JSON.stringify(result),

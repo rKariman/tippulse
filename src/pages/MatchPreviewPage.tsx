@@ -81,13 +81,11 @@ export default function MatchPreviewPage() {
   const kickoffTime = new Date(displayData.kickoffAt).toLocaleTimeString("en-GB", {
     hour: "2-digit",
     minute: "2-digit",
-    timeZone: "Europe/Rome",
   });
   const kickoffDate = new Date(displayData.kickoffAt).toLocaleDateString("en-GB", {
     weekday: "long",
     day: "numeric",
     month: "long",
-    timeZone: "Europe/Rome",
   });
 
   return (
@@ -213,7 +211,6 @@ export default function MatchPreviewPage() {
                           {new Date(f.kickoff_at).toLocaleTimeString("en-GB", {
                             hour: "2-digit",
                             minute: "2-digit",
-                            timeZone: "Europe/Rome",
                           })}
                         </span>
                       </div>

@@ -2,6 +2,34 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+// League priority order by API-Football league ID (extracted from slug suffix)
+// Most important leagues first
+const LEAGUE_PRIORITY_ORDER: Record<string, number> = {
+  "2": 1,    // UCL
+  "39": 2,   // Premier League
+  "140": 3,  // La Liga
+  "135": 4,  // Serie A
+  "78": 5,   // Bundesliga
+  "61": 6,   // Ligue 1
+  "307": 7,  // Saudi Pro League
+  "290": 8,  // Iran Persian Gulf Pro League
+};
+
+// Helper to extract league ID from slug (e.g., "premier-league-39" → "39")
+function getLeagueIdFromSlug(slug: string): string | null {
+  const match = slug.match(/-(\d+)$/);
+  return match ? match[1] : null;
+}
+
+// Get priority for a league (lower = higher priority)
+function getLeaguePriority(leagueSlug: string): number {
+  const leagueId = getLeagueIdFromSlug(leagueSlug);
+  if (leagueId && LEAGUE_PRIORITY_ORDER[leagueId] !== undefined) {
+    return LEAGUE_PRIORITY_ORDER[leagueId];
+  }
+  return 999; // Unknown leagues go last
+}
+
 export interface Fixture {
   id: string;
   slug: string;
@@ -73,11 +101,22 @@ export function useFeaturedLeagues() {
       const { data, error } = await supabase
         .from("leagues")
         .select("id, name, slug, country, is_featured")
-        .eq("is_featured", true)
-        .order("name");
+        .eq("is_featured", true);
 
       if (error) throw error;
-      return data as League[];
+      
+      // Sort by priority order
+      const sorted = (data as League[]).sort((a, b) => {
+        const priorityA = getLeaguePriority(a.slug);
+        const priorityB = getLeaguePriority(b.slug);
+        
+        if (priorityA !== priorityB) {
+          return priorityA - priorityB;
+        }
+        return a.name.localeCompare(b.name);
+      });
+      
+      return sorted;
     },
   });
 }
@@ -292,7 +331,19 @@ export function useFixturesByLeague(leagueSlug?: string | null, dateRange?: "tod
 
       console.log(`[useFixturesByLeague] Grouped into ${Object.keys(grouped).length} leagues (skipped ${skippedNoLeague} fixtures without league)`);
 
-      return Object.values(grouped);
+      // Sort league groups by priority order, then by name for unknown leagues
+      const sortedGroups = Object.values(grouped).sort((a, b) => {
+        const priorityA = getLeaguePriority(a.league.slug);
+        const priorityB = getLeaguePriority(b.league.slug);
+        
+        if (priorityA !== priorityB) {
+          return priorityA - priorityB;
+        }
+        // Same priority (both unknown) → sort by name
+        return a.league.name.localeCompare(b.league.name);
+      });
+
+      return sortedGroups;
     },
   });
 }

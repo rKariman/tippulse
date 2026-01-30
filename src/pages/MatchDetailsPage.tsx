@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
-import { ChevronLeft, ChevronDown, ChevronUp, Loader2, AlertTriangle } from "lucide-react";
+import { ChevronLeft, ChevronDown, Loader2, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { MatchTipCard } from "@/components/match/MatchTipCard";
 import { PlayerTipCard } from "@/components/match/PlayerTipCard";
 import { TeamLogo } from "@/components/TeamLogo";
+import { PLACE_BET_URL } from "@/config/betting";
 
 interface MatchTip {
   id: string;
@@ -35,7 +36,7 @@ interface FixtureDetails {
   league: { name: string } | null;
 }
 
-const PLACE_BET_BASE_URL = import.meta.env.VITE_PLACE_BET_BASE_URL || "https://example.com/bet";
+
 
 export default function MatchDetailsPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -233,8 +234,6 @@ export default function MatchDetailsPage() {
                 <MatchTipCard
                   key={tip.id}
                   tip={tip}
-                  fixtureId={fixture.id}
-                  baseUrl={PLACE_BET_BASE_URL}
                 />
               ))}
             </div>
@@ -254,8 +253,6 @@ export default function MatchDetailsPage() {
                   <PlayerTipCard
                     key={tip.id}
                     tip={tip}
-                    fixtureId={fixture.id}
-                    baseUrl={PLACE_BET_BASE_URL}
                   />
                 ))}
               </div>
@@ -270,7 +267,7 @@ export default function MatchDetailsPage() {
                     <span className="text-fluid-xs text-ink-500">odds when tipped</span>
                   </div>
                   <a
-                    href={`${PLACE_BET_BASE_URL}?fixture=${fixture.id}&type=betbuilder`}
+                    href={PLACE_BET_URL}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-6 py-2 rounded flex items-center justify-center gap-1 transition-colors text-fluid-sm"

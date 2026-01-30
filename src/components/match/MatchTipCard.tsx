@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp, Star } from "lucide-react";
+import { PLACE_BET_URL } from "@/config/betting";
 
 interface MatchTip {
   id: string;
@@ -12,11 +13,9 @@ interface MatchTip {
 
 interface MatchTipCardProps {
   tip: MatchTip;
-  fixtureId: string;
-  baseUrl: string;
 }
 
-export function MatchTipCard({ tip, fixtureId, baseUrl }: MatchTipCardProps) {
+export function MatchTipCard({ tip }: MatchTipCardProps) {
   const [expanded, setExpanded] = useState(false);
 
   const getStars = (confidence: string) => {
@@ -78,7 +77,7 @@ export function MatchTipCard({ tip, fixtureId, baseUrl }: MatchTipCardProps) {
           )}
         </div>
         <a
-          href={`${baseUrl}?fixture=${fixtureId}&tip=${tip.id}`}
+          href={PLACE_BET_URL}
           target="_blank"
           rel="noopener noreferrer"
           className="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-6 py-2 rounded flex items-center gap-1 transition-colors"

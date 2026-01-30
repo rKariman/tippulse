@@ -1,6 +1,6 @@
-import { Link } from "react-router-dom";
 import { Star } from "lucide-react";
 import { useState } from "react";
+import { PLACE_BET_URL } from "@/config/betting";
 
 export interface PreviewTipBlockProps {
   title: string;
@@ -107,18 +107,22 @@ export function PreviewTipBlock({
               <span className="font-bold text-ink-900">
                 £{(stake * odds).toFixed(2)}
               </span>
-              <Link
-                to={`/r/${bookie.offerSlug}`}
+              <a
+                href={PLACE_BET_URL}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="btn-cta text-xs py-1.5 text-center"
               >
                 BET HERE
-              </Link>
-              <Link
-                to={`/r/${bookie.offerSlug}`}
+              </a>
+              <a
+                href={PLACE_BET_URL}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="btn-primary text-xs py-1.5 text-center"
               >
                 Claim Bonus
-              </Link>
+              </a>
             </div>
           ))}
         </div>

@@ -35,6 +35,24 @@ serve(async (req) => {
 
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const SYNC_ADMIN_TOKEN = Deno.env.get("SYNC_ADMIN_TOKEN");
+
+  // Authorization check - require service role key or cron token
+  const authHeader = req.headers.get("Authorization");
+  const cronToken = req.headers.get("x-cron-token");
+  
+  const isAuthorizedByServiceRole = authHeader && SUPABASE_SERVICE_ROLE_KEY && 
+    authHeader.replace("Bearer ", "") === SUPABASE_SERVICE_ROLE_KEY;
+  const isAuthorizedByCronToken = cronToken && SYNC_ADMIN_TOKEN && 
+    cronToken === SYNC_ADMIN_TOKEN;
+  
+  if (!isAuthorizedByServiceRole && !isAuthorizedByCronToken) {
+    console.log("[warm-tips-cache] Unauthorized access attempt");
+    return new Response(
+      JSON.stringify({ error: "Unauthorized" }),
+      { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     return new Response(

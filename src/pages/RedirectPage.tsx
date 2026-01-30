@@ -2,6 +2,7 @@ import { useParams, useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { isValidRedirectUrl } from "@/lib/urlValidation";
 
 export default function RedirectPage() {
   const { id } = useParams<{ id: string }>();
@@ -32,6 +33,13 @@ export default function RedirectPage() {
       if (isLoading) return;
       
       if (!offer) {
+        setError(true);
+        return;
+      }
+
+      // Validate URL scheme to prevent XSS via javascript: or data: URLs
+      if (!isValidRedirectUrl(offer.target_url)) {
+        console.error("Invalid redirect URL scheme:", offer.target_url);
         setError(true);
         return;
       }

@@ -55,13 +55,13 @@ function TipMatchCard({ fixture, tip }: { fixture: TipFixture; tip?: AITip }) {
 
       {/* Match info */}
       <div className="p-fluid-md">
-        <div className="flex flex-col gap-2 xs:flex-row xs:items-center xs:justify-between mb-3">
-          <div className="flex-1 min-w-0">
-            <div className="font-semibold text-ink-900 text-fluid-lg">
+        <div className="flex flex-col gap-2 xs:flex-row xs:items-center xs:justify-between mb-4">
+          <div className="flex-1 min-w-0 flex flex-col gap-1">
+            <div className="font-semibold text-ink-900 text-fluid-lg leading-normal">
               {fixture.home_team?.name || "Home Team"}
             </div>
-            <div className="text-ink-500 text-fluid-sm">vs</div>
-            <div className="font-semibold text-ink-900 text-fluid-lg">
+            <div className="text-ink-500 text-fluid-sm leading-normal">vs</div>
+            <div className="font-semibold text-ink-900 text-fluid-lg leading-normal">
               {fixture.away_team?.name || "Away Team"}
             </div>
           </div>

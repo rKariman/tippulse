@@ -223,6 +223,31 @@ Deno.serve(async (req) => {
       result
     );
 
+    // Trigger warm-tips-cache after successful sync
+    if (result.success && upsertedFixturesCount > 0) {
+      console.log('[sync-fixtures] Triggering warm-tips-cache...');
+      try {
+        const warmResponse = await fetch(
+          `${Deno.env.get('SUPABASE_URL')}/functions/v1/warm-tips-cache`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+            },
+            body: JSON.stringify({ warmCache: true, cleanup: true }),
+          }
+        );
+        if (!warmResponse.ok) {
+          console.error('[sync-fixtures] warm-tips-cache failed:', await warmResponse.text());
+        } else {
+          console.log('[sync-fixtures] warm-tips-cache triggered successfully');
+        }
+      } catch (warmError) {
+        console.error('[sync-fixtures] Error triggering warm-tips-cache:', warmError);
+      }
+    }
+
     return new Response(
       JSON.stringify({ ...result, dateFrom, dateTo }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

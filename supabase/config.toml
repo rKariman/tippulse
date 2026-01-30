@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.ensure-tips]
 verify_jwt = false
+
+[functions.warm-tips-cache]
+verify_jwt = false

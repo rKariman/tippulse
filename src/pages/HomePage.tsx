@@ -118,7 +118,10 @@ export default function HomePage() {
               <Link to="/tips/bet-of-the-day" className="btn-cta">
                 Today's Tips
               </Link>
-              <Link to="/predictions" className="font-semibold text-fluid-sm">
+              <Link
+                to="/predictions"
+                className="btn-secondary bg-white/10 border-white/20 text-white hover:bg-white/20"
+              >
                 Match Predictions
               </Link>
             </div>

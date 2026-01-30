@@ -12,7 +12,7 @@ interface TeamLogoProps {
 const sizeClasses = {
   sm: "w-8 h-8 md:w-9 md:h-9",
   md: "w-10 h-10 md:w-12 md:h-12",
-  lg: "w-14 h-14 md:w-18 md:h-18",
+  lg: "w-14 h-14 md:w-[72px] md:h-[72px]",
 };
 
 const iconSizes = {
@@ -29,7 +29,7 @@ export function TeamLogo({ logoUrl, teamName, size = "sm", className }: TeamLogo
   return (
     <div
       className={cn(
-        "rounded-full bg-ink-100 flex items-center justify-center overflow-hidden shrink-0",
+        "flex items-center justify-center shrink-0",
         sizeClasses[size],
         className
       )}
@@ -42,7 +42,7 @@ export function TeamLogo({ logoUrl, teamName, size = "sm", className }: TeamLogo
           alt={`${teamName} logo`}
           loading="lazy"
           decoding="async"
-          className="w-full h-full object-contain p-0.5"
+          className="w-full h-full object-contain"
           onError={() => setHasError(true)}
         />
       )}

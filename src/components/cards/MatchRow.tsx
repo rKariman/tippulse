@@ -43,15 +43,15 @@ export function MatchRow({
   const content = (
     <div className="flex flex-col gap-fluid-sm p-fluid-md bg-surface border border-ink-200 rounded-xl hover:shadow-lift hover:-translate-y-[1px] transition-all cursor-pointer group xs:flex-row xs:items-center xs:gap-fluid-md">
       {/* Teams and Score */}
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 flex flex-col gap-1.5">
         <div className="flex items-center justify-between gap-2">
-          <span className="font-semibold text-ink-900 truncate text-fluid-sm">{homeTeam}</span>
+          <span className="font-semibold text-ink-900 truncate text-fluid-sm leading-normal">{homeTeam}</span>
           {showScore && (
             <span className="font-bold text-ink-900 tabular-nums text-fluid-sm">{homeScore ?? 0}</span>
           )}
         </div>
-        <div className="flex items-center justify-between gap-2 mt-1">
-          <span className="font-semibold text-ink-900 truncate text-fluid-sm">{awayTeam}</span>
+        <div className="flex items-center justify-between gap-2">
+          <span className="font-semibold text-ink-900 truncate text-fluid-sm leading-normal">{awayTeam}</span>
           {showScore && (
             <span className="font-bold text-ink-900 tabular-nums text-fluid-sm">{awayScore ?? 0}</span>
           )}

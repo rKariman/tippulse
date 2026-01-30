@@ -46,9 +46,9 @@ export function MatchRowNew({
           </div>
 
           {/* Team Names */}
-          <div className="flex-1 min-w-0">
-            <div className="font-medium text-ink-900 truncate text-fluid-sm">{homeTeam}</div>
-            <div className="font-medium text-ink-900 truncate text-fluid-sm">{awayTeam}</div>
+          <div className="flex-1 min-w-0 flex flex-col gap-1">
+            <div className="font-medium text-ink-900 truncate text-fluid-sm leading-normal">{homeTeam}</div>
+            <div className="font-medium text-ink-900 truncate text-fluid-sm leading-normal">{awayTeam}</div>
           </div>
         </div>
 

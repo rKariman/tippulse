@@ -62,11 +62,11 @@ export function NextUpCarousel({ fixtures, previewMap }: NextUpCarouselProps) {
                   />
                 </div>
 
-                <div className="min-w-0 flex-1">
-                  <div className="text-fluid-sm font-medium text-ink-900 truncate">
+                <div className="min-w-0 flex-1 flex flex-col gap-0.5">
+                  <div className="text-fluid-sm font-medium text-ink-900 truncate leading-normal">
                     {fixture.home_team?.name || "TBD"} vs
                   </div>
-                  <div className="text-fluid-sm font-medium text-ink-900 truncate">
+                  <div className="text-fluid-sm font-medium text-ink-900 truncate leading-normal">
                     {fixture.away_team?.name || "TBD"}
                   </div>
                 </div>

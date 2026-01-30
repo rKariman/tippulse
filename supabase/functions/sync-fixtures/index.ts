@@ -5,13 +5,23 @@ import { createApiFootballProvider } from '../_shared/api-football-provider.ts';
 import { upsertFixture, logSyncRun } from '../_shared/upsert.ts';
 import type { SyncResult } from '../_shared/types.ts';
 
+// Compute date range: today to today+N days (UTC)
+function getDateRange(daysAhead: number = 10): { dateFrom: string; dateTo: string } {
+  const now = new Date();
+  const dateFrom = now.toISOString().slice(0, 10); // YYYY-MM-DD
+  const dateTo = new Date(now.getTime() + daysAhead * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  return { dateFrom, dateTo };
+}
+
 Deno.serve(async (req) => {
   // Handle CORS preflight
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
 
-  // Validate admin token
-  if (!validateAdminToken(req)) {
+  // Check if this is a scheduled/cron call (no auth needed) or manual call (needs admin token)
+  const isScheduledCall = req.headers.get('x-scheduled-call') === 'true';
+  
+  if (!isScheduledCall && !validateAdminToken(req)) {
     return new Response(
       JSON.stringify({ error: 'Unauthorized' }),
       { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -20,15 +30,12 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json().catch(() => ({}));
-    const { dateFrom, dateTo } = body;
+    
+    // Auto-compute date range if not provided (for scheduled runs)
+    const defaultRange = getDateRange(10);
+    const dateFrom = body?.dateFrom || defaultRange.dateFrom;
+    const dateTo = body?.dateTo || defaultRange.dateTo;
     const leagueIdRaw = body?.leagueId;
-
-    if (!dateFrom || !dateTo) {
-      return new Response(
-        JSON.stringify({ error: 'dateFrom and dateTo are required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
 
     // league must be ONE integer per API request. If we receive a list (e.g. "2,39" or "[2,39]"), split it.
     const requestedLeagueIds: string[] = (() => {
@@ -88,6 +95,8 @@ Deno.serve(async (req) => {
     let fetchedCount = 0;
     let filteredAllowedCount = 0;
     let upsertedFixturesCount = 0;
+
+    console.log(`[sync-fixtures] Starting sync: dateFrom=${dateFrom} dateTo=${dateTo} leagues=${leagueIdsToSync.join(',')}`);
 
     for (const leagueId of leagueIdsToSync) {
       console.log(`[sync-fixtures] league=${leagueId} dateFrom=${dateFrom} dateTo=${dateTo}`);
@@ -193,7 +202,7 @@ Deno.serve(async (req) => {
     }
 
     console.log(
-      `[sync-fixtures] fetchedCount=${fetchedCount} filteredAllowedCount=${filteredAllowedCount} upsertedFixturesCount=${upsertedFixturesCount}`
+      `[sync-fixtures] Complete: fetchedCount=${fetchedCount} filteredAllowedCount=${filteredAllowedCount} upsertedFixturesCount=${upsertedFixturesCount}`
     );
 
     // Log sync run
@@ -209,12 +218,13 @@ Deno.serve(async (req) => {
         fetchedCount,
         filteredAllowedCount,
         upsertedFixturesCount,
+        scheduled: isScheduledCall,
       },
       result
     );
 
     return new Response(
-      JSON.stringify(result),
+      JSON.stringify({ ...result, dateFrom, dateTo }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {

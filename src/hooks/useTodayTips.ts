@@ -1,18 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
-
-// Major leagues in priority order
-const MAJOR_LEAGUE_PATTERNS = [
-  "uefa-champions-league",
-  "premier-league",
-  "la-liga",
-  "serie-a",
-  "bundesliga",
-  "ligue-1",
-  "europa-league",
-  "primera-division",
-];
+import { getLeaguePriority, logLeagueOrder } from "@/lib/leaguePriority";
 
 export interface TipFixture {
   id: string;
@@ -45,43 +34,10 @@ export interface AITip {
   market: string;
 }
 
-function getLeaguePriority(leagueSlug: string | undefined): number {
-  if (!leagueSlug) return 999;
-  
-  // Check for major league patterns
-  for (let i = 0; i < MAJOR_LEAGUE_PATTERNS.length; i++) {
-    if (leagueSlug.toLowerCase().includes(MAJOR_LEAGUE_PATTERNS[i].toLowerCase()) ||
-        MAJOR_LEAGUE_PATTERNS[i].toLowerCase().includes(leagueSlug.toLowerCase())) {
-      return i;
-    }
-  }
-  
-  // Check for country-based priority
-  const countryPriority: Record<string, number> = {
-    "england": 10,
-    "spain": 11,
-    "italy": 12,
-    "germany": 13,
-    "france": 14,
-    "europe": 5,
-    "world": 6,
-  };
-  
-  for (const [country, priority] of Object.entries(countryPriority)) {
-    if (leagueSlug.toLowerCase().includes(country)) {
-      return priority;
-    }
-  }
-  
-  return 100; // Default low priority
-}
-
 function sortAndPrioritizeFixtures(fixtures: TipFixture[]): TipFixture[] {
-  const now = new Date();
-  
-  return fixtures
+  const sorted = fixtures
     .sort((a, b) => {
-      // First, sort by league priority
+      // First, sort by league priority using shared utility
       const priorityA = getLeaguePriority(a.league?.slug);
       const priorityB = getLeaguePriority(b.league?.slug);
       
@@ -89,13 +45,19 @@ function sortAndPrioritizeFixtures(fixtures: TipFixture[]): TipFixture[] {
         return priorityA - priorityB;
       }
       
-      // Then by kickoff time (closest to now first, but not past)
+      // Then by kickoff time
       const kickoffA = new Date(a.kickoff_at);
       const kickoffB = new Date(b.kickoff_at);
       
       return kickoffA.getTime() - kickoffB.getTime();
     })
     .slice(0, 20);
+  
+  // Debug log to verify order
+  const uniqueLeagues = Array.from(new Set(sorted.map(f => f.league).filter(Boolean)));
+  logLeagueOrder("useTodayTips", uniqueLeagues as { slug: string; name: string }[]);
+  
+  return sorted;
 }
 
 export function useTodayFixturesForTips() {

@@ -8,6 +8,24 @@ interface FetchOptions {
   retryDelay?: number;
 }
 
+export interface FixtureWithLogos {
+  externalId: string;
+  leagueExternalId: string;
+  homeTeamExternalId: string;
+  awayTeamExternalId: string;
+  homeTeamName?: string;
+  awayTeamName?: string;
+  homeTeamLogo?: string;
+  awayTeamLogo?: string;
+  kickoffAt: string;
+  venue?: string;
+  status: 'scheduled' | 'in_play' | 'finished' | 'postponed' | 'cancelled';
+  season?: string;
+  round?: string;
+  homeScore?: number;
+  awayScore?: number;
+}
+
 async function fetchWithRetry(
   url: string,
   apiKey: string,
@@ -153,6 +171,7 @@ export function createApiFootballProvider(apiKey: string): MatchDataProvider {
         name: item.team.name,
         shortName: item.team.code,
         crest: item.team.logo,
+        logoUrl: item.team.logo,
         leagueExternalId: leagueId,
       }));
     },
@@ -196,6 +215,8 @@ export function createApiFootballProvider(apiKey: string): MatchDataProvider {
             awayTeamExternalId: String(m.teams.away.id),
             homeTeamName: m.teams.home.name,
             awayTeamName: m.teams.away.name,
+            homeTeamLogo: m.teams.home.logo,
+            awayTeamLogo: m.teams.away.logo,
             kickoffAt: m.fixture.date,
             venue: m.fixture.venue?.name,
             status: mapStatus(m.fixture.status?.short || 'NS'),

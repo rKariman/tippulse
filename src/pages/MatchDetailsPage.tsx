@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronDown, ChevronUp, Loader2, AlertTriangle } from "luc
 import { supabase } from "@/integrations/supabase/client";
 import { MatchTipCard } from "@/components/match/MatchTipCard";
 import { PlayerTipCard } from "@/components/match/PlayerTipCard";
+import { TeamLogo } from "@/components/TeamLogo";
 
 interface MatchTip {
   id: string;
@@ -29,8 +30,8 @@ interface FixtureDetails {
   id: string;
   kickoff_at: string;
   venue: string | null;
-  home_team: { name: string } | null;
-  away_team: { name: string } | null;
+  home_team: { name: string; logo_url: string | null } | null;
+  away_team: { name: string; logo_url: string | null } | null;
   league: { name: string } | null;
 }
 
@@ -75,15 +76,15 @@ export default function MatchDetailsPage() {
           return;
         }
 
-        // Fetch fixture details
+        // Fetch fixture details with logo_url
         const { data: fixtureData, error: fetchError } = await supabase
           .from("fixtures")
           .select(`
             id,
             kickoff_at,
             venue,
-            home_team:home_team_id(name),
-            away_team:away_team_id(name),
+            home_team:home_team_id(name, logo_url),
+            away_team:away_team_id(name, logo_url),
             league:league_id(name)
           `)
           .eq("id", fixtureId)
@@ -180,8 +181,13 @@ export default function MatchDetailsPage() {
           <div className="flex items-center justify-center gap-8">
             {/* Home Team */}
             <div className="text-center flex-1">
-              <div className="w-16 h-16 mx-auto bg-ink-100 rounded-full flex items-center justify-center text-2xl font-bold text-ink-400 mb-2">
-                {homeTeam.charAt(0)}
+              <div className="mx-auto mb-2">
+                <TeamLogo
+                  logoUrl={fixture.home_team?.logo_url}
+                  teamName={homeTeam}
+                  size="lg"
+                  className="mx-auto w-14 h-14 md:w-[72px] md:h-[72px]"
+                />
               </div>
               <h2 className="font-semibold text-ink-900">{homeTeam}</h2>
             </div>
@@ -190,8 +196,13 @@ export default function MatchDetailsPage() {
 
             {/* Away Team */}
             <div className="text-center flex-1">
-              <div className="w-16 h-16 mx-auto bg-ink-100 rounded-full flex items-center justify-center text-2xl font-bold text-ink-400 mb-2">
-                {awayTeam.charAt(0)}
+              <div className="mx-auto mb-2">
+                <TeamLogo
+                  logoUrl={fixture.away_team?.logo_url}
+                  teamName={awayTeam}
+                  size="lg"
+                  className="mx-auto w-14 h-14 md:w-[72px] md:h-[72px]"
+                />
               </div>
               <h2 className="font-semibold text-ink-900">{awayTeam}</h2>
             </div>

@@ -92,27 +92,36 @@ export async function upsertTeam(
   supabase: SupabaseClient,
   team: Team,
   provider: string,
-  leagueId?: string
+  leagueId?: string,
+  logoUrl?: string
 ): Promise<string | null> {
   const slug = createSlug(team.name);
 
   // Check if team exists by external_id and provider
   const { data: existing } = await supabase
     .from('teams')
-    .select('id')
+    .select('id, logo_url')
     .eq('external_id', team.externalId)
     .eq('provider', provider)
     .maybeSingle();
 
   if (existing) {
-    // Update existing
+    // Update existing - only update logo if provided and different
+    const updateData: Record<string, unknown> = {
+      name: team.name,
+      league_id: leagueId,
+      last_synced_at: new Date().toISOString(),
+    };
+    
+    // Update logo_url if provided and (missing or different)
+    const effectiveLogoUrl = logoUrl || team.logoUrl || team.crest;
+    if (effectiveLogoUrl && (existing as any).logo_url !== effectiveLogoUrl) {
+      updateData.logo_url = effectiveLogoUrl;
+    }
+    
     const { error } = await supabase
       .from('teams')
-      .update({
-        name: team.name,
-        league_id: leagueId,
-        last_synced_at: new Date().toISOString(),
-      } as any)
+      .update(updateData as any)
       .eq('id', (existing as any).id);
     
     if (error) {
@@ -123,6 +132,7 @@ export async function upsertTeam(
   }
 
   // Insert new
+  const effectiveLogoUrl = logoUrl || team.logoUrl || team.crest;
   const { data, error } = await supabase
     .from('teams')
     .insert({
@@ -131,6 +141,7 @@ export async function upsertTeam(
       name: team.name,
       slug,
       league_id: leagueId,
+      logo_url: effectiveLogoUrl || null,
       last_synced_at: new Date().toISOString(),
     } as any)
     .select('id')
@@ -147,6 +158,7 @@ export async function upsertTeam(
           name: team.name,
           slug: `${slug}-${team.externalId}`,
           league_id: leagueId,
+          logo_url: effectiveLogoUrl || null,
           last_synced_at: new Date().toISOString(),
         } as any)
         .select('id')

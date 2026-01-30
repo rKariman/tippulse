@@ -145,20 +145,28 @@ Deno.serve(async (req) => {
           }
         }
 
-        // Ensure teams exist (otherwise upsertFixture will skip)
-        const ensureTeam = async (teamExtId: string, teamName: string, leagueExtId: string) => {
-          if (teamIdMap.has(teamExtId)) return;
+        // Ensure teams exist with logo URLs (otherwise upsertFixture will skip)
+        const ensureTeam = async (teamExtId: string, teamName: string, leagueExtId: string, logoUrl?: string) => {
           const leagueId = leagueIdMap.get(leagueExtId);
           const { data: existing } = await supabase
             .from('teams')
-            .select('id')
+            .select('id, logo_url')
             .eq('external_id', teamExtId)
             .eq('provider', provider.providerName)
             .maybeSingle();
+          
           if (existing) {
+            // Update logo if provided and missing/different
+            if (logoUrl && (existing as any).logo_url !== logoUrl) {
+              await supabase
+                .from('teams')
+                .update({ logo_url: logoUrl, last_synced_at: new Date().toISOString() })
+                .eq('id', (existing as any).id);
+            }
             teamIdMap.set(teamExtId, (existing as any).id);
             return;
           }
+          
           const slug = teamName
             .toLowerCase()
             .replace(/[^a-z0-9]+/g, '-')
@@ -172,6 +180,7 @@ Deno.serve(async (req) => {
               name: teamName,
               slug: `${slug}-${teamExtId}`,
               league_id: leagueId,
+              logo_url: logoUrl || null,
               last_synced_at: new Date().toISOString(),
             } as any)
             .select('id')
@@ -183,8 +192,8 @@ Deno.serve(async (req) => {
           }
         };
 
-        await ensureTeam(fixture.homeTeamExternalId, fixture.homeTeamName || 'Home', fixture.leagueExternalId);
-        await ensureTeam(fixture.awayTeamExternalId, fixture.awayTeamName || 'Away', fixture.leagueExternalId);
+        await ensureTeam(fixture.homeTeamExternalId, fixture.homeTeamName || 'Home', fixture.leagueExternalId, fixture.homeTeamLogo);
+        await ensureTeam(fixture.awayTeamExternalId, fixture.awayTeamName || 'Away', fixture.leagueExternalId, fixture.awayTeamLogo);
 
         const fixtureId = await upsertFixture(
           supabase,

@@ -20,11 +20,13 @@ export interface Fixture {
     id: string;
     name: string;
     slug: string;
+    logo_url: string | null;
   } | null;
   away_team: {
     id: string;
     name: string;
     slug: string;
+    logo_url: string | null;
   } | null;
   league: {
     id: string;
@@ -146,8 +148,8 @@ export function useUpcomingFixtures(options?: {
           phase,
           phase_started_at,
           base_minute,
-          home_team:teams!fixtures_home_team_id_fkey(id, name, slug),
-          away_team:teams!fixtures_away_team_id_fkey(id, name, slug),
+          home_team:teams!fixtures_home_team_id_fkey(id, name, slug, logo_url),
+          away_team:teams!fixtures_away_team_id_fkey(id, name, slug, logo_url),
           league:leagues!fixtures_league_id_fkey(id, name, slug)
         `)
         .order("kickoff_at", { ascending: true })
@@ -237,8 +239,8 @@ export function useFixturesByLeague(leagueSlug?: string | null, dateRange?: "tod
           phase,
           phase_started_at,
           base_minute,
-          home_team:teams!fixtures_home_team_id_fkey(id, name, slug),
-          away_team:teams!fixtures_away_team_id_fkey(id, name, slug),
+          home_team:teams!fixtures_home_team_id_fkey(id, name, slug, logo_url),
+          away_team:teams!fixtures_away_team_id_fkey(id, name, slug, logo_url),
           league:leagues!fixtures_league_id_fkey(id, name, slug)
         `)
         .gte("kickoff_at", startDate)
@@ -314,8 +316,8 @@ export function useFixtureBySlug(slug: string) {
           phase,
           phase_started_at,
           base_minute,
-          home_team:teams!fixtures_home_team_id_fkey(id, name, slug),
-          away_team:teams!fixtures_away_team_id_fkey(id, name, slug),
+          home_team:teams!fixtures_home_team_id_fkey(id, name, slug, logo_url),
+          away_team:teams!fixtures_away_team_id_fkey(id, name, slug, logo_url),
           league:leagues!fixtures_league_id_fkey(id, name, slug)
         `)
         .eq("slug", slug)

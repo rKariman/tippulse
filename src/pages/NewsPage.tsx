@@ -38,18 +38,18 @@ export default function NewsPage() {
 
   return (
     <Layout>
-      <div className="container py-6">
+      <div className="container py-fluid-lg">
         {/* Page header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-ink-900 mb-2">News & Articles</h1>
-          <p className="text-ink-500 text-sm max-w-2xl">
+        <div className="mb-fluid-lg">
+          <h1 className="text-fluid-2xl font-bold text-ink-900 mb-2">News & Articles</h1>
+          <p className="text-ink-500 text-fluid-sm max-w-2xl leading-relaxed">
             Stay up to date with the latest football news, betting tips, and expert analysis.
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className="grid lg:grid-cols-3 gap-fluid-lg">
           {/* Main content */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-fluid-lg">
             {isLoading ? (
               <div className="text-center py-12">
                 <Loader2 size={32} className="animate-spin text-brand-600 mx-auto mb-3" />
@@ -63,9 +63,9 @@ export default function NewsPage() {
               <>
                 {/* Featured articles (first 2) */}
                 {filteredArticles.length >= 2 && (
-                  <section>
-                    <h2 className="section-title mb-4">Latest News</h2>
-                    <div className="grid md:grid-cols-2 gap-4">
+                  <section className="mb-fluid-lg">
+                    <h2 className="section-title mb-fluid-md">Latest News</h2>
+                    <div className="grid md:grid-cols-2 gap-fluid-md">
                       {filteredArticles.slice(0, 2).map((article) => (
                         <ArticleCard
                           key={article.id}
@@ -84,7 +84,7 @@ export default function NewsPage() {
 
                 {/* Regular articles */}
                 <section>
-                  <div className="space-y-3">
+                  <div className="space-y-fluid-sm">
                     {filteredArticles.slice(2).map((article) => (
                       <ArticleCard
                         key={article.id}
@@ -108,7 +108,7 @@ export default function NewsPage() {
           </div>
 
           {/* Sidebar */}
-          <aside className="space-y-6">
+          <aside className="space-y-fluid-lg">
             <NewsletterWidget />
 
             {/* Most Read */}
@@ -135,7 +135,7 @@ export default function NewsPage() {
             {/* Categories */}
             <div className="card-base overflow-hidden">
               <div className="widget-header">Popular Topics</div>
-              <div className="p-4 space-y-2">
+              <div className="p-fluid-md space-y-2">
                 <a
                   href="/tips/bet-of-the-day"
                   className="flex items-center justify-between py-2 px-3 text-sm text-ink-700 hover:bg-ink-50 rounded-lg transition-colors"

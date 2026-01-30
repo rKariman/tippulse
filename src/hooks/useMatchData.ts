@@ -81,25 +81,37 @@ export function useFeaturedLeagues() {
 }
 
 // Helper to get date boundaries in client's local timezone
-function getLocalDateBoundaries() {
+// IMPORTANT: Today = full calendar day, NOT from "now"
+// Matches should NOT disappear after kickoff
+export function getLocalDateBoundaries() {
   const now = new Date();
   
-  // Get today at midnight in local timezone
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  // Get today at LOCAL midnight (00:00:00.000)
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
   
-  // Tomorrow at midnight
+  // Tomorrow at LOCAL midnight
   const tomorrowStart = new Date(todayStart);
   tomorrowStart.setDate(tomorrowStart.getDate() + 1);
   
-  // Day+2 at midnight
+  // Day+2 at LOCAL midnight
   const day2Start = new Date(todayStart);
   day2Start.setDate(day2Start.getDate() + 2);
   
-  // Day+8 at midnight (7 days from tomorrow = upcoming range end)
+  // Day+8 at LOCAL midnight (upcoming = days 2-7)
   const day8Start = new Date(todayStart);
   day8Start.setDate(day8Start.getDate() + 8);
   
+  // Format local date for display
+  const localDateStr = now.toLocaleDateString('en-CA'); // YYYY-MM-DD format
+  
   return {
+    // Local Date objects for display
+    localDate: localDateStr,
+    todayStartLocal: todayStart,
+    tomorrowStartLocal: tomorrowStart,
+    day2StartLocal: day2Start,
+    day8StartLocal: day8Start,
+    // UTC ISO strings for DB queries (kickoff_at is timestamptz)
     todayStart: todayStart.toISOString(),
     tomorrowStart: tomorrowStart.toISOString(),
     day2Start: day2Start.toISOString(),

@@ -4,7 +4,8 @@ import { DateTabs } from "@/components/widgets/DateTabs";
 import { LeagueFilter } from "@/components/widgets/LeagueFilter";
 import { NextUpCarousel } from "@/components/predictions/NextUpCarousel";
 import { MatchRowNew } from "@/components/predictions/MatchRowNew";
-import { useState } from "react";
+import { DateFilterDebug } from "@/components/admin/DateFilterDebug";
+import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { ChevronRight, Loader2, Trophy } from "lucide-react";
 import { useUpcomingFixtures, useLeagues, useFixturesByLeague, usePreviews } from "@/hooks/useMatchData";
@@ -19,6 +20,19 @@ export default function PredictionsPage() {
   const { data: fixtureGroups, isLoading: fixturesLoading, refetch } = useFixturesByLeague(leagueFilter, dateFilter);
   const { data: upcomingFixtures } = useUpcomingFixtures({ limit: 6, dateRange: "today" });
   const { data: previews } = usePreviews();
+
+  // Fetch counts for all date ranges (for debug panel)
+  const { data: todayGroups } = useFixturesByLeague(null, "today");
+  const { data: tomorrowGroups } = useFixturesByLeague(null, "tomorrow");
+  const { data: upcomingGroups } = useFixturesByLeague(null, "upcoming");
+
+  // Calculate total counts
+  const todayCount = useMemo(() => 
+    todayGroups?.reduce((sum, g) => sum + g.fixtures.length, 0) ?? 0, [todayGroups]);
+  const tomorrowCount = useMemo(() => 
+    tomorrowGroups?.reduce((sum, g) => sum + g.fixtures.length, 0) ?? 0, [tomorrowGroups]);
+  const upcomingCount = useMemo(() => 
+    upcomingGroups?.reduce((sum, g) => sum + g.fixtures.length, 0) ?? 0, [upcomingGroups]);
 
   // Auto-refresh every 30 seconds for live scores
   useQuery({
@@ -58,6 +72,13 @@ export default function PredictionsPage() {
 
             {/* Date Tabs */}
             <DateTabs selected={dateFilter} onChange={setDateFilter} />
+
+            {/* Admin Debug Panel */}
+            <DateFilterDebug
+              todayCount={todayCount}
+              tomorrowCount={tomorrowCount}
+              upcomingCount={upcomingCount}
+            />
 
             {/* League Filter */}
             <LeagueFilter

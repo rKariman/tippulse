@@ -115,7 +115,7 @@ export default function HomePage() {
               previews for all major leagues.
             </p>
             <div className="flex flex-wrap gap-3 mt-4">
-              <Link to="/tips/bet-of-the-day" className="btn-cta">
+              <Link to="/tips/bet-of-the-day" className="btn-cta inline-flex items-center justify-center text-center">
                 Today's Tips
               </Link>
               <Link

@@ -149,8 +149,8 @@ export default function PredictionsPage() {
           <aside className="space-y-fluid-lg">
             {/* Archived Predictions */}
             <div className="bg-surface border border-ink-200 rounded-xl overflow-hidden">
-              <div className="bg-ink-800 text-white px-4 py-3 flex items-center justify-between">
-                <span className="font-semibold">Archived Predictions</span>
+              <div className="bg-ink-800 text-white px-fluid-md py-fluid-sm flex items-center justify-between">
+                <span className="font-semibold text-fluid-sm">Archived Predictions</span>
                 <button className="text-ink-300 hover:text-white">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path
@@ -162,7 +162,7 @@ export default function PredictionsPage() {
                   </svg>
                 </button>
               </div>
-              <div className="p-4">
+              <div className="p-fluid-md">
                 <div className="grid grid-cols-7 gap-1 text-center text-xs">
                   {["Sat", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri"].map((day) => (
                     <div key={day} className="text-ink-400 py-1">
@@ -192,10 +192,10 @@ export default function PredictionsPage() {
 
             {/* Popular Leagues */}
             <div className="bg-surface border border-ink-200 rounded-xl overflow-hidden">
-              <div className="bg-ink-800 text-white px-4 py-3">
-                <span className="font-semibold">Popular Leagues</span>
+              <div className="bg-ink-800 text-white px-fluid-md py-fluid-sm">
+                <span className="font-semibold text-fluid-sm">Popular Leagues</span>
               </div>
-              <div className="p-4 space-y-2">
+              <div className="p-fluid-md space-y-2">
                 {leagues.length === 0 ? (
                   <p className="text-center text-ink-500 text-sm py-4">No leagues available</p>
                 ) : (

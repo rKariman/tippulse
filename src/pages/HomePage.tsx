@@ -120,7 +120,7 @@ export default function HomePage() {
               </Link>
               <Link
                 to="/predictions"
-                className="btn-secondary bg-white/10 border-white/20 text-white hover:bg-white/20"
+                className="btn-secondary bg-white/10 border-white/20 text-white hover:bg-white/20 inline-flex items-center justify-center text-center"
               >
                 Match Predictions
               </Link>

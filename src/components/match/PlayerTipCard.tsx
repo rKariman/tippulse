@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { PLACE_BET_URL } from "@/config/betting";
 
 interface PlayerTip {
   id: string;
@@ -11,11 +12,9 @@ interface PlayerTip {
 
 interface PlayerTipCardProps {
   tip: PlayerTip;
-  fixtureId: string;
-  baseUrl: string;
 }
 
-export function PlayerTipCard({ tip, fixtureId, baseUrl }: PlayerTipCardProps) {
+export function PlayerTipCard({ tip }: PlayerTipCardProps) {
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -42,7 +41,7 @@ export function PlayerTipCard({ tip, fixtureId, baseUrl }: PlayerTipCardProps) {
             <p className="text-sm text-ink-600">{tip.reasoning}</p>
           </div>
           <a
-            href={`${baseUrl}?fixture=${fixtureId}&playerTip=${tip.id}`}
+            href={PLACE_BET_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-4 py-1.5 rounded text-sm transition-colors"

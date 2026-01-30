@@ -16,6 +16,14 @@ export default {
         "2xl": "1280px",
       },
     },
+    screens: {
+      xs: "420px",
+      sm: "640px",
+      md: "768px",
+      lg: "1024px",
+      xl: "1280px",
+      "2xl": "1536px",
+    },
     extend: {
       fontFamily: {
         sans: ["Inter", "ui-sans-serif", "system-ui", "Segoe UI", "Roboto", "Helvetica", "Arial", "sans-serif"],
@@ -57,13 +65,18 @@ export default {
         },
         success: {
           50: "#ECFDF5",
+          100: "#D1FAE5",
           500: "#10B981",
           700: "#047857",
         },
         warning: {
           50: "#FFFBEB",
+          100: "#FEF3C7",
+          200: "#FDE68A",
           500: "#F59E0B",
+          600: "#D97706",
           700: "#B45309",
+          800: "#92400E",
         },
         danger: {
           50: "#FEF2F2",

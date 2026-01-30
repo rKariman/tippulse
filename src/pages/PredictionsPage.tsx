@@ -60,13 +60,13 @@ export default function PredictionsPage() {
 
   return (
     <Layout>
-      <div className="container py-6">
+      <div className="container py-fluid-lg">
         {/* Page header */}
-        <h1 className="text-2xl font-bold text-ink-900 mb-6">Today's Football Predictions</h1>
+        <h1 className="text-fluid-2xl font-bold text-ink-900 mb-6">Today's Football Predictions</h1>
 
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-fluid-lg">
           {/* Main content */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-fluid-lg">
             {/* Next Up Carousel */}
             <NextUpCarousel fixtures={nextUpFixtures} previewMap={previewMap} />
 
@@ -99,11 +99,11 @@ export default function PredictionsPage() {
               displayGroups.map((group) => (
                 <section key={group.league.id} className="bg-surface border border-ink-200 rounded-xl overflow-hidden">
                   {/* League Header */}
-                  <div className="bg-brand-800 text-white px-4 py-3 flex items-center justify-between">
-                    <h3 className="font-semibold">{group.league.name}</h3>
+                  <div className="bg-brand-800 text-white px-fluid-md py-fluid-sm flex flex-col gap-1 xs:flex-row xs:items-center xs:justify-between">
+                    <h3 className="font-semibold text-fluid-sm">{group.league.name}</h3>
                     <Link
                       to={`/predictions?league=${group.league.slug}`}
-                      className="text-sm text-brand-200 hover:text-white flex items-center gap-1"
+                      className="text-fluid-xs text-brand-200 hover:text-white flex items-center gap-1"
                     >
                       See All <ChevronRight size={14} />
                     </Link>
@@ -146,7 +146,7 @@ export default function PredictionsPage() {
           </div>
 
           {/* Sidebar */}
-          <aside className="space-y-6">
+          <aside className="space-y-fluid-lg">
             {/* Archived Predictions */}
             <div className="bg-surface border border-ink-200 rounded-xl overflow-hidden">
               <div className="bg-ink-800 text-white px-4 py-3 flex items-center justify-between">

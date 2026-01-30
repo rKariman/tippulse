@@ -161,24 +161,24 @@ export default function MatchDetailsPage() {
 
   return (
     <Layout>
-      <div className="container py-6">
+      <div className="container py-fluid-lg">
         {/* Back link */}
         <Link
           to="/predictions"
-          className="inline-flex items-center text-sm text-ink-500 hover:text-brand-600 mb-4"
+          className="inline-flex items-center text-fluid-sm text-ink-500 hover:text-brand-600 mb-4"
         >
           <ChevronLeft size={16} />
           Back to Predictions
         </Link>
 
         {/* Match Header */}
-        <div className="bg-brand-800 text-white rounded-t-xl px-4 py-3 flex items-center justify-between">
-          <span className="font-medium">{kickoffTime}</span>
-          <span className="text-brand-200">{fixture.venue || "TBC"}</span>
+        <div className="bg-brand-800 text-white rounded-t-xl px-fluid-md py-fluid-sm flex flex-col gap-1 xs:flex-row xs:items-center xs:justify-between">
+          <span className="font-medium text-fluid-sm">{kickoffTime}</span>
+          <span className="text-brand-200 text-fluid-xs">{fixture.venue || "TBC"}</span>
         </div>
 
-        <div className="bg-surface border border-t-0 border-ink-200 rounded-b-xl p-6 mb-6">
-          <div className="flex items-center justify-center gap-8">
+        <div className="bg-surface border border-t-0 border-ink-200 rounded-b-xl p-fluid-lg mb-6">
+          <div className="flex flex-col gap-fluid-md xs:flex-row xs:items-center xs:justify-center xs:gap-8">
             {/* Home Team */}
             <div className="text-center flex-1">
               <div className="mx-auto mb-2">
@@ -189,10 +189,10 @@ export default function MatchDetailsPage() {
                   className="mx-auto w-14 h-14 md:w-[72px] md:h-[72px]"
                 />
               </div>
-              <h2 className="font-semibold text-ink-900">{homeTeam}</h2>
+              <h2 className="font-semibold text-ink-900 text-fluid-base">{homeTeam}</h2>
             </div>
 
-            <div className="text-2xl font-bold text-ink-400">vs</div>
+            <div className="text-fluid-xl font-bold text-ink-400 text-center">vs</div>
 
             {/* Away Team */}
             <div className="text-center flex-1">
@@ -204,11 +204,11 @@ export default function MatchDetailsPage() {
                   className="mx-auto w-14 h-14 md:w-[72px] md:h-[72px]"
                 />
               </div>
-              <h2 className="font-semibold text-ink-900">{awayTeam}</h2>
+              <h2 className="font-semibold text-ink-900 text-fluid-base">{awayTeam}</h2>
             </div>
           </div>
 
-          <p className="text-center text-sm text-ink-500 mt-4">
+          <p className="text-center text-fluid-sm text-ink-500 mt-4">
             Broadcast: TBC
           </p>
         </div>
@@ -224,9 +224,9 @@ export default function MatchDetailsPage() {
         {/* FST TIPS Section */}
         {!tipsLoading && matchTips.length > 0 && (
           <div className="mb-6">
-            <div className="bg-brand-800 text-white px-4 py-3 rounded-t-xl flex items-center gap-2">
-              <span className="bg-brand-600 text-white text-xs font-bold px-2 py-0.5 rounded">FST</span>
-              <span className="font-semibold">TIPS</span>
+            <div className="bg-brand-800 text-white px-fluid-md py-fluid-sm rounded-t-xl flex items-center gap-2">
+              <span className="bg-brand-600 text-white text-fluid-xs font-bold px-2 py-0.5 rounded">FST</span>
+              <span className="font-semibold text-fluid-sm">TIPS</span>
             </div>
             <div className="bg-surface border border-t-0 border-ink-200 rounded-b-xl divide-y divide-ink-100">
               {matchTips.map((tip) => (
@@ -244,9 +244,9 @@ export default function MatchDetailsPage() {
         {/* BET BUILDER Section */}
         {!tipsLoading && playerTips.length > 0 && (
           <div className="mb-6">
-            <div className="bg-gradient-to-r from-amber-500 to-amber-600 text-white px-4 py-3 rounded-t-xl flex items-center gap-2">
-              <span className="bg-white text-amber-600 text-xs font-bold px-2 py-0.5 rounded">BET</span>
-              <span className="font-semibold">BUILDER</span>
+            <div className="bg-gradient-to-r from-amber-500 to-amber-600 text-white px-fluid-md py-fluid-sm rounded-t-xl flex items-center gap-2">
+              <span className="bg-white text-amber-600 text-fluid-xs font-bold px-2 py-0.5 rounded">BET</span>
+              <span className="font-semibold text-fluid-sm">BUILDER</span>
             </div>
             <div className="bg-surface border border-t-0 border-ink-200 rounded-b-xl">
               <div className="divide-y divide-ink-100">
@@ -261,19 +261,19 @@ export default function MatchDetailsPage() {
               </div>
 
               {/* Final Bet Builder Button */}
-              <div className="p-4 border-t border-ink-100">
-                <div className="flex items-center justify-between">
+              <div className="p-fluid-md border-t border-ink-100">
+                <div className="flex flex-col gap-fluid-sm xs:flex-row xs:items-center xs:justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-lg font-bold text-brand-800 border border-ink-200 px-3 py-1 rounded">
+                    <span className="text-fluid-lg font-bold text-brand-800 border border-ink-200 px-3 py-1 rounded">
                       {betBuilderOdds}
                     </span>
-                    <span className="text-sm text-ink-500">odds when tipped</span>
+                    <span className="text-fluid-xs text-ink-500">odds when tipped</span>
                   </div>
                   <a
                     href={`${PLACE_BET_BASE_URL}?fixture=${fixture.id}&type=betbuilder`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-6 py-2 rounded flex items-center gap-1 transition-colors"
+                    className="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-6 py-2 rounded flex items-center justify-center gap-1 transition-colors text-fluid-sm"
                   >
                     PLACE BET
                     <ChevronDown size={16} />
@@ -285,9 +285,9 @@ export default function MatchDetailsPage() {
         )}
 
         {/* 18+ Disclaimer */}
-        <div className="bg-ink-50 border border-ink-200 rounded-lg p-4 flex items-start gap-3">
+        <div className="bg-ink-50 border border-ink-200 rounded-lg p-fluid-md flex items-start gap-3">
           <AlertTriangle className="text-warning-500 shrink-0 mt-0.5" size={20} />
-          <div className="text-sm text-ink-600">
+          <div className="text-fluid-sm text-ink-600">
             <p className="font-semibold mb-1">18+ Please Gamble Responsibly</p>
             <p>
               Betting tips are for entertainment purposes only. Past performance does not guarantee

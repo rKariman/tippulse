@@ -42,31 +42,31 @@ function TipMatchCard({ fixture, tip }: { fixture: TipFixture; tip?: AITip }) {
   return (
     <div className="card-base overflow-hidden">
       {/* Header with league */}
-      <div className="bg-brand-800 text-white px-4 py-2 flex items-center justify-between">
+      <div className="bg-brand-800 text-white px-fluid-md py-fluid-sm flex flex-col gap-1 xs:flex-row xs:items-center xs:justify-between">
         <div className="flex items-center gap-2">
           <Trophy size={14} />
-          <span className="text-sm font-medium">{fixture.league?.name || "Unknown League"}</span>
+          <span className="text-fluid-sm font-medium">{fixture.league?.name || "Unknown League"}</span>
         </div>
-        <div className="flex items-center gap-2 text-xs text-brand-200">
+        <div className="flex items-center gap-2 text-fluid-xs text-brand-200">
           <Clock size={12} />
           <span>{kickoffDate} • {kickoffTime}</span>
         </div>
       </div>
 
       {/* Match info */}
-      <div className="p-4">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex-1">
-            <div className="font-semibold text-ink-900 text-lg">
+      <div className="p-fluid-md">
+        <div className="flex flex-col gap-2 xs:flex-row xs:items-center xs:justify-between mb-3">
+          <div className="flex-1 min-w-0">
+            <div className="font-semibold text-ink-900 text-fluid-lg">
               {fixture.home_team?.name || "Home Team"}
             </div>
-            <div className="text-ink-500 text-sm">vs</div>
-            <div className="font-semibold text-ink-900 text-lg">
+            <div className="text-ink-500 text-fluid-sm">vs</div>
+            <div className="font-semibold text-ink-900 text-fluid-lg">
               {fixture.away_team?.name || "Away Team"}
             </div>
           </div>
           {fixture.venue && (
-            <div className="text-xs text-ink-400 text-right max-w-[120px]">
+            <div className="text-fluid-xs text-ink-400 xs:text-right max-w-[150px] truncate">
               {fixture.venue}
             </div>
           )}
@@ -74,28 +74,28 @@ function TipMatchCard({ fixture, tip }: { fixture: TipFixture; tip?: AITip }) {
 
         {/* AI Tip */}
         {tip ? (
-          <div className="bg-ink-50 border border-ink-200 rounded-lg p-3 mt-3">
-            <div className="flex items-start justify-between mb-2">
+          <div className="bg-ink-50 border border-ink-200 rounded-lg p-fluid-sm mt-3">
+            <div className="flex flex-col gap-2 xs:flex-row xs:items-start xs:justify-between mb-2">
               <div className="flex items-center gap-2">
                 <TrendingUp size={16} className="text-brand-600" />
-                <span className="font-semibold text-ink-800 text-sm">AI Tip</span>
+                <span className="font-semibold text-ink-800 text-fluid-sm">AI Tip</span>
               </div>
               <ConfidenceBadge confidence={tip.confidence} />
             </div>
             
             <div className="mb-2">
-              <span className="inline-block bg-brand-600 text-white px-2 py-1 rounded text-sm font-medium">
+              <span className="inline-block bg-brand-600 text-white px-2 py-1 rounded text-fluid-sm font-medium">
                 {tip.prediction}
               </span>
-              <span className="ml-2 text-xs text-ink-500">({tip.market})</span>
+              <span className="ml-2 text-fluid-xs text-ink-500">({tip.market})</span>
             </div>
             
-            <p className="text-sm text-ink-600 leading-relaxed">
+            <p className="text-fluid-sm text-ink-600 leading-relaxed">
               {tip.reasoning}
             </p>
           </div>
         ) : (
-          <div className="bg-ink-50 border border-ink-200 rounded-lg p-3 mt-3 animate-pulse">
+          <div className="bg-ink-50 border border-ink-200 rounded-lg p-fluid-sm mt-3 animate-pulse">
             <div className="h-4 bg-ink-200 rounded w-1/3 mb-2"></div>
             <div className="h-3 bg-ink-200 rounded w-full mb-1"></div>
             <div className="h-3 bg-ink-200 rounded w-2/3"></div>
@@ -115,26 +115,26 @@ export default function TipsPage() {
 
   return (
     <Layout>
-      <div className="container py-6">
+      <div className="container py-fluid-lg">
         {/* Page header */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-ink-900 mb-2">{marketTitle}</h1>
-          <p className="text-ink-500 text-sm max-w-2xl">
+          <h1 className="text-fluid-2xl font-bold text-ink-900 mb-2">{marketTitle}</h1>
+          <p className="text-ink-500 text-fluid-sm max-w-2xl">
             Today's top 20 football matches with AI-powered betting insights. Our algorithm analyzes league strength and match context to provide tips.
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-fluid-lg">
           {/* Main content */}
-          <div className="lg:col-span-2 space-y-4">
+          <div className="lg:col-span-2 space-y-fluid-md">
             {/* Disclaimer banner */}
-            <div className="bg-warning-50 border border-warning-200 rounded-lg p-4 flex items-start gap-3">
+            <div className="bg-warning-50 border border-warning-200 rounded-lg p-fluid-md flex items-start gap-3">
               <AlertTriangle size={20} className="text-warning-600 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm text-warning-800 font-medium">
+                <p className="text-fluid-sm text-warning-800 font-medium">
                   AI-generated opinions, not guaranteed. Bet responsibly. 18+
                 </p>
-                <p className="text-xs text-warning-600 mt-1">
+                <p className="text-fluid-xs text-warning-600 mt-1">
                   Tips are based on general analysis and league characteristics. Always gamble responsibly.
                 </p>
               </div>
@@ -168,7 +168,7 @@ export default function TipsPage() {
 
             {/* Matches list */}
             {fixtures && fixtures.length > 0 && (
-              <div className="space-y-4">
+              <div className="space-y-fluid-md">
                 {tipsLoading && (
                   <div className="flex items-center gap-2 text-sm text-brand-600 mb-2">
                     <Loader2 size={16} className="animate-spin" />
@@ -188,18 +188,18 @@ export default function TipsPage() {
           </div>
 
           {/* Sidebar */}
-          <aside className="space-y-6">
+          <aside className="space-y-fluid-lg">
             <NewsletterWidget />
 
             {/* Popular Markets */}
             <div className="card-base overflow-hidden">
               <div className="widget-header">Popular Markets</div>
-              <div className="p-4 space-y-2">
+              <div className="p-fluid-md space-y-2">
                 {Object.entries(marketLabels).map(([slug, label]) => (
                   <a
                     key={slug}
                     href={`/tips/${slug}`}
-                    className={`block py-2 px-3 text-sm rounded-lg transition-colors ${
+                    className={`block py-2 px-3 text-fluid-sm rounded-lg transition-colors ${
                       market === slug
                         ? "bg-brand-50 text-brand-700 font-medium"
                         : "text-ink-700 hover:bg-ink-50"
@@ -214,10 +214,10 @@ export default function TipsPage() {
             {/* Responsible gambling notice */}
             <div className="card-base overflow-hidden">
               <div className="widget-header">Responsible Gambling</div>
-              <div className="p-4 text-sm text-ink-600 space-y-2">
+              <div className="p-fluid-md text-fluid-sm text-ink-600 space-y-2">
                 <p>🔞 18+ Only</p>
                 <p>Gambling can be addictive. Please play responsibly.</p>
-                <p className="text-xs text-ink-400">
+                <p className="text-fluid-xs text-ink-400">
                   If you feel you may have a gambling problem, visit{" "}
                   <a href="https://www.begambleaware.org" target="_blank" rel="noopener noreferrer" className="link-brand">
                     BeGambleAware.org

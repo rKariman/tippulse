@@ -105,14 +105,14 @@ export default function HomePage() {
 
   return (
     <Layout>
-      <div className="container py-6">
+      <div className="container py-fluid-lg">
         {/* Hero section */}
         <section className="mb-8">
-          <div className="bg-gradient-to-r from-brand-800 to-brand-900 rounded-2xl p-6 md:p-8 text-white">
-            <h1 className="text-2xl md:text-3xl font-bold mb-2">
+          <div className="bg-gradient-to-r from-brand-800 to-brand-900 rounded-2xl p-fluid-lg text-white">
+            <h1 className="text-fluid-2xl md:text-fluid-3xl font-bold mb-2">
               Free Football Betting Tips & Predictions
             </h1>
-            <p className="text-brand-200 text-sm md:text-base max-w-2xl">
+            <p className="text-brand-200 text-fluid-sm max-w-2xl">
               Expert tips from our team of professional tipsters. Get daily predictions, accumulators, and match previews for all major leagues.
             </p>
             <div className="flex flex-wrap gap-3 mt-4">
@@ -126,14 +126,14 @@ export default function HomePage() {
           </div>
         </section>
 
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-fluid-lg">
           {/* Main content */}
-          <div className="lg:col-span-2 space-y-8">
+          <div className="lg:col-span-2 space-y-fluid-lg">
             {/* Top Offers - from Supabase free_bets */}
             <section>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="section-title">Top Free Bet Offers</h2>
-                <Link to="/free-bets" className="link-brand text-sm flex items-center gap-1">
+                <Link to="/free-bets" className="link-brand text-fluid-sm flex items-center gap-1">
                   See All <ChevronRight size={16} />
                 </Link>
               </div>
@@ -142,7 +142,7 @@ export default function HomePage() {
                   <Loader2 className="h-6 w-6 animate-spin text-brand-600" />
                 </div>
               ) : freeBetsData && freeBetsData.length > 0 ? (
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-fluid-md">
                   {freeBetsData.map((offer) => (
                     <OfferCard
                       key={offer.id}
@@ -167,7 +167,7 @@ export default function HomePage() {
             <section>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="section-title">Upcoming Matches</h2>
-                <Link to="/predictions" className="link-brand text-sm flex items-center gap-1">
+                <Link to="/predictions" className="link-brand text-fluid-sm flex items-center gap-1">
                   See All <ChevronRight size={16} />
                 </Link>
               </div>
@@ -182,7 +182,7 @@ export default function HomePage() {
                   <p className="text-sm mt-1">Run sync from /admin/sync to fetch matches.</p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-fluid-sm">
                   {todayFixtures.map((fixture) => (
                     <MatchRow
                       key={fixture.id}
@@ -229,7 +229,7 @@ export default function HomePage() {
             <section>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="section-title">Latest News</h2>
-                <Link to="/news" className="link-brand text-sm flex items-center gap-1">
+                <Link to="/news" className="link-brand text-fluid-sm flex items-center gap-1">
                   See All <ChevronRight size={16} />
                 </Link>
               </div>
@@ -239,7 +239,7 @@ export default function HomePage() {
                 </div>
               ) : newsPostsData && newsPostsData.length > 0 ? (
                 <>
-                  <div className="grid md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-fluid-md">
                     {newsPostsData.slice(0, 2).map((article) => (
                       <ArticleCard
                         key={article.id}
@@ -279,26 +279,26 @@ export default function HomePage() {
           </div>
 
           {/* Sidebar */}
-          <aside className="space-y-6">
+          <aside className="space-y-fluid-lg">
             <NewsletterWidget />
 
             {/* Quick Links Widget */}
             <div className="card-base overflow-hidden">
               <div className="widget-header">Quick Links</div>
-              <div className="p-4 space-y-2">
-                <Link to="/tips/acca" className="block py-2 px-3 text-sm text-ink-700 hover:bg-ink-50 rounded-lg transition-colors">
+              <div className="p-fluid-md space-y-2">
+                <Link to="/tips/acca" className="block py-2 px-3 text-fluid-sm text-ink-700 hover:bg-ink-50 rounded-lg transition-colors">
                   Accumulator Tips
                 </Link>
-                <Link to="/tips/btts" className="block py-2 px-3 text-sm text-ink-700 hover:bg-ink-50 rounded-lg transition-colors">
+                <Link to="/tips/btts" className="block py-2 px-3 text-fluid-sm text-ink-700 hover:bg-ink-50 rounded-lg transition-colors">
                   Both Teams to Score
                 </Link>
-                <Link to="/tips/correct-score" className="block py-2 px-3 text-sm text-ink-700 hover:bg-ink-50 rounded-lg transition-colors">
+                <Link to="/tips/correct-score" className="block py-2 px-3 text-fluid-sm text-ink-700 hover:bg-ink-50 rounded-lg transition-colors">
                   Correct Score Tips
                 </Link>
-                <Link to="/predictions" className="block py-2 px-3 text-sm text-ink-700 hover:bg-ink-50 rounded-lg transition-colors">
+                <Link to="/predictions" className="block py-2 px-3 text-fluid-sm text-ink-700 hover:bg-ink-50 rounded-lg transition-colors">
                   Match Predictions
                 </Link>
-                <Link to="/free-bets" className="block py-2 px-3 text-sm text-ink-700 hover:bg-ink-50 rounded-lg transition-colors">
+                <Link to="/free-bets" className="block py-2 px-3 text-fluid-sm text-ink-700 hover:bg-ink-50 rounded-lg transition-colors">
                   Free Bets
                 </Link>
               </div>
@@ -309,20 +309,20 @@ export default function HomePage() {
               <div className="widget-header">Today's Tips</div>
               <div className="divide-y divide-ink-100">
                 {sidebarTips.length === 0 ? (
-                  <div className="p-4 text-center text-ink-500 text-sm">
+                  <div className="p-fluid-md text-center text-ink-500 text-fluid-sm">
                     <p>No tips available today.</p>
-                    <Link to="/tips/bet-of-the-day" className="link-brand text-xs mt-1 block">
+                    <Link to="/tips/bet-of-the-day" className="link-brand text-fluid-xs mt-1 block">
                       View all tips →
                     </Link>
                   </div>
                 ) : (
                   sidebarTips.map(({ id, fixture, tip }) => (
-                    <div key={id} className="p-3">
+                    <div key={id} className="p-fluid-sm">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs text-ink-400">{fixture.league?.name || "League"}</span>
+                        <span className="text-fluid-xs text-ink-400">{fixture.league?.name || "League"}</span>
                         <div className="flex items-center gap-1">
                           <Clock size={10} className="text-ink-400" />
-                          <span className="text-xs text-ink-400">
+                          <span className="text-fluid-xs text-ink-400">
                             {new Date(fixture.kickoff_at).toLocaleTimeString("en-GB", {
                               hour: "2-digit",
                               minute: "2-digit",
@@ -332,18 +332,18 @@ export default function HomePage() {
                       </div>
                       {tip ? (
                         <>
-                          <p className="text-sm font-medium text-ink-900 flex items-center gap-1">
+                          <p className="text-fluid-sm font-medium text-ink-900 flex items-center gap-1">
                             <TrendingUp size={12} className="text-brand-600" />
                             {tip.prediction}
                           </p>
-                          <p className="text-xs text-ink-500 mt-0.5">
+                          <p className="text-fluid-xs text-ink-500 mt-0.5">
                             {fixture.home_team?.name} vs {fixture.away_team?.name}
                           </p>
                         </>
                       ) : (
                         <>
                           <div className="h-4 bg-ink-100 rounded animate-pulse mb-1" />
-                          <p className="text-xs text-ink-500">
+                          <p className="text-fluid-xs text-ink-500">
                             {fixture.home_team?.name} vs {fixture.away_team?.name}
                           </p>
                         </>

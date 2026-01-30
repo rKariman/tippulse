@@ -47,11 +47,11 @@ export function NewsletterWidget() {
       <div className="widget-header">
         Sign Up For Our Free Weekly Betting Emails
       </div>
-      <div className="p-4">
+      <div className="p-fluid-md">
         {status === "success" ? (
           <div className="text-center py-4">
-            <p className="text-success-700 font-medium">Thanks for subscribing!</p>
-            <p className="text-sm text-ink-500 mt-1">Check your inbox for the latest tips.</p>
+            <p className="text-success-700 font-medium text-fluid-sm">Thanks for subscribing!</p>
+            <p className="text-fluid-xs text-ink-500 mt-1">Check your inbox for the latest tips.</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-3">
@@ -61,7 +61,7 @@ export function NewsletterWidget() {
                 placeholder="Please enter a valid email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-2.5 border border-ink-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                className="w-full px-3 py-2.5 border border-ink-200 rounded-lg text-fluid-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                 required
               />
             </div>
@@ -74,13 +74,13 @@ export function NewsletterWidget() {
                 onChange={(e) => setIsOver18(e.target.checked)}
                 className="mt-1 rounded border-ink-300 text-brand-600 focus:ring-brand-500"
               />
-              <label htmlFor="over18" className="text-sm text-ink-600">
+              <label htmlFor="over18" className="text-fluid-sm text-ink-600">
                 You must be over 18 <span className="text-danger-500">*</span>
               </label>
             </div>
 
             {status === "error" && (
-              <p className="text-sm text-danger-500">{errorMessage}</p>
+              <p className="text-fluid-sm text-danger-500">{errorMessage}</p>
             )}
 
             <button
@@ -91,7 +91,7 @@ export function NewsletterWidget() {
               {status === "loading" ? "Signing up..." : "Sign Up"}
             </button>
 
-            <p className="text-xs text-ink-500 text-center">
+            <p className="text-fluid-xs text-ink-500 text-center">
               By signing up you agree to our{" "}
               <a href="/terms" className="link-brand">terms</a> and{" "}
               <a href="/privacy" className="link-brand">privacy policy</a>

@@ -31,52 +31,48 @@ export function MatchRowNew({
   });
 
   return (
-    <div className="flex items-center gap-4 p-4 hover:bg-ink-50 transition-colors">
-      {/* Team Logos */}
-      <div className="flex flex-col items-center gap-1 shrink-0">
-        <TeamLogo logoUrl={homeTeamLogoUrl} teamName={homeTeam} size="sm" />
-        <TeamLogo logoUrl={awayTeamLogoUrl} teamName={awayTeam} size="sm" />
-      </div>
+    <Link
+      to={`/match/${previewSlug}`}
+      className="block p-fluid-md hover:bg-ink-50 transition-colors"
+    >
+      {/* Mobile-first stacked layout that switches to row on larger screens */}
+      <div className="flex flex-col gap-fluid-sm xs:flex-row xs:items-center xs:gap-fluid-md">
+        {/* Teams section */}
+        <div className="flex items-center gap-fluid-sm flex-1 min-w-0">
+          {/* Team Logos */}
+          <div className="flex flex-col items-center gap-1 shrink-0">
+            <TeamLogo logoUrl={homeTeamLogoUrl} teamName={homeTeam} size="sm" />
+            <TeamLogo logoUrl={awayTeamLogoUrl} teamName={awayTeam} size="sm" />
+          </div>
 
-      {/* Team Names */}
-      <div className="flex-1 min-w-0">
-        <div className="font-medium text-ink-900 truncate">{homeTeam}</div>
-        <div className="font-medium text-ink-900 truncate">{awayTeam}</div>
-      </div>
+          {/* Team Names */}
+          <div className="flex-1 min-w-0">
+            <div className="font-medium text-ink-900 truncate text-fluid-sm">{homeTeam}</div>
+            <div className="font-medium text-ink-900 truncate text-fluid-sm">{awayTeam}</div>
+          </div>
+        </div>
 
-      {/* Time & Broadcast */}
-      <div className="text-right shrink-0">
-        <div className="font-semibold text-ink-900">{kickoffTime}</div>
-        {broadcast && (
-          <Link
-            to="#"
-            className="text-sm text-brand-600 hover:text-brand-700 flex items-center justify-end gap-0.5"
-          >
-            {broadcast}
-            <ChevronRight size={12} />
-          </Link>
-        )}
-      </div>
+        {/* Time, Broadcast & Link section */}
+        <div className="flex items-center justify-between xs:justify-end gap-fluid-md shrink-0">
+          {/* Time & Broadcast */}
+          <div className="text-left xs:text-right">
+            <div className="font-semibold text-ink-900 text-fluid-sm">{kickoffTime}</div>
+            {broadcast && (
+              <span className="text-fluid-xs text-brand-600 flex items-center gap-0.5">
+                {broadcast}
+                <ChevronRight size={12} />
+              </span>
+            )}
+          </div>
 
-      {/* Link */}
-      <div className="shrink-0">
-        {linkText ? (
-          <Link
-            to={`/match/${previewSlug}`}
-            className="text-sm text-brand-600 hover:text-brand-700 flex items-center gap-1"
-          >
-            {linkText}
-            <ChevronRight size={14} />
-          </Link>
-        ) : (
-          <Link
-            to={`/match/${previewSlug}`}
-            className="w-8 h-8 flex items-center justify-center text-ink-400 hover:text-brand-600 transition-colors"
-          >
-            <ChevronRight size={20} />
-          </Link>
-        )}
+          {/* Link Arrow */}
+          <div className="shrink-0">
+            <div className="w-8 h-8 flex items-center justify-center text-ink-400 hover:text-brand-600 transition-colors">
+              <ChevronRight size={20} />
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
+    </Link>
   );
 }

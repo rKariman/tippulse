@@ -29,21 +29,21 @@ export function Header() {
     <header className="sticky top-0 z-50 bg-surface shadow-soft">
       {/* Top bar */}
       <div className="header-strip">
-        <div className="container flex items-center justify-between h-14">
+        <div className="container flex items-center justify-between" style={{ height: 'clamp(3rem, 2.5rem + 2vw, 3.5rem)' }}>
           <Link to="/" className="flex items-center gap-2">
-            <span className="text-xl font-bold tracking-tight">
+            <span className="font-bold tracking-tight text-fluid-xl">
               <span className="text-brand-300">Tip</span>
               <span className="text-white">Pulse</span>
             </span>
           </Link>
           
           {/* Desktop nav */}
-          <nav className="hidden md:flex items-center gap-6">
+          <nav className="hidden md:flex items-center gap-fluid-md">
             {mainNavItems.map((item) => (
               <Link
                 key={item.href}
                 to={item.href}
-                className={`text-sm font-medium transition-colors ${
+                className={`text-fluid-sm font-medium transition-colors whitespace-nowrap ${
                   isActive(item.href)
                     ? "text-white"
                     : "text-brand-200 hover:text-white"
@@ -54,7 +54,7 @@ export function Header() {
             ))}
             <Link
               to="/free-bets"
-              className="bg-success-500 hover:bg-success-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+              className="bg-success-500 hover:bg-success-700 text-white px-fluid-md py-2 rounded-lg text-fluid-sm font-semibold transition-colors whitespace-nowrap"
             >
               Free Bets
             </Link>
@@ -79,7 +79,7 @@ export function Header() {
                 <Link
                   key={item.href}
                   to={item.href}
-                  className={`whitespace-nowrap px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  className={`whitespace-nowrap px-3 py-2 text-fluid-sm font-medium rounded-lg transition-colors ${
                     location.pathname === item.href
                       ? "text-brand-600 bg-brand-50"
                       : "text-ink-600 hover:text-brand-600 hover:bg-ink-50"
@@ -101,7 +101,7 @@ export function Header() {
               <Link
                 key={item.href}
                 to={item.href}
-                className="block px-4 py-2 text-ink-700 hover:bg-ink-50 rounded-lg font-medium"
+                className="block px-4 py-2 text-ink-700 hover:bg-ink-50 rounded-lg font-medium text-fluid-sm"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 {item.label}
@@ -110,7 +110,7 @@ export function Header() {
             <div className="pt-2 border-t border-ink-200 mt-2">
               <Link
                 to="/free-bets"
-                className="block bg-success-500 text-white text-center py-3 rounded-lg font-semibold"
+                className="block bg-success-500 text-white text-center py-3 rounded-lg font-semibold text-fluid-sm"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Free Bets

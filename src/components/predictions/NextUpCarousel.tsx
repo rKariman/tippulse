@@ -20,14 +20,15 @@ export function NextUpCarousel({ fixtures, previewMap }: NextUpCarouselProps) {
 
   return (
     <div className="bg-surface border border-ink-200 rounded-xl overflow-hidden">
-      <div className="flex items-stretch">
+      {/* Stacked on very small, row on larger */}
+      <div className="flex flex-col xs:flex-row xs:items-stretch">
         {/* Next Up Label */}
-        <div className="bg-brand-800 text-white px-4 py-3 flex items-center shrink-0">
-          <span className="font-semibold">Next Up</span>
+        <div className="bg-brand-800 text-white px-fluid-md py-fluid-sm flex items-center justify-center xs:justify-start shrink-0">
+          <span className="font-semibold text-fluid-sm">Next Up</span>
         </div>
 
         {/* Matches horizontal scroll */}
-        <div className="flex-1 flex items-stretch overflow-x-auto">
+        <div className="flex-1 flex items-stretch overflow-x-auto scrollbar-hide">
           {fixtures.map((fixture, index) => {
             const kickoff = new Date(fixture.kickoff_at);
             const now = new Date();
@@ -41,12 +42,12 @@ export function NextUpCarousel({ fixtures, previewMap }: NextUpCarouselProps) {
               <Link
                 key={fixture.id}
                 to={`/match/${previewMap.get(fixture.id) || fixture.slug}`}
-                className={`flex items-center gap-3 px-4 py-3 hover:bg-ink-50 transition-colors border-r border-ink-200 ${
-                  index === 0 ? "border-l border-ink-200" : ""
+                className={`flex items-center gap-fluid-sm px-fluid-md py-fluid-sm hover:bg-ink-50 transition-colors border-b xs:border-b-0 xs:border-r border-ink-200 min-w-0 ${
+                  index === 0 ? "xs:border-l border-ink-200" : ""
                 }`}
               >
                 {/* Team logos */}
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 shrink-0">
                   <TeamLogo
                     logoUrl={fixture.home_team?.logo_url}
                     teamName={fixture.home_team?.name || "Home"}
@@ -61,16 +62,16 @@ export function NextUpCarousel({ fixtures, previewMap }: NextUpCarouselProps) {
                   />
                 </div>
 
-                <div className="min-w-0">
-                  <div className="text-sm font-medium text-ink-900 truncate">
+                <div className="min-w-0 flex-1">
+                  <div className="text-fluid-sm font-medium text-ink-900 truncate">
                     {fixture.home_team?.name || "TBD"} vs
                   </div>
-                  <div className="text-sm font-medium text-ink-900 truncate">
+                  <div className="text-fluid-sm font-medium text-ink-900 truncate">
                     {fixture.away_team?.name || "TBD"}
                   </div>
                 </div>
 
-                <div className="text-sm text-ink-500 whitespace-nowrap">{timeUntil}</div>
+                <div className="text-fluid-xs text-ink-500 whitespace-nowrap shrink-0">{timeUntil}</div>
 
                 <ChevronRight size={16} className="text-ink-400 shrink-0" />
               </Link>

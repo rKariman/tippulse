@@ -176,8 +176,14 @@ export async function upsertFixture(
   const homeTeamId = teamIdMap.get(fixture.homeTeamExternalId);
   const awayTeamId = teamIdMap.get(fixture.awayTeamExternalId);
 
+  // CRITICAL: All FKs must be set - never insert with NULL league_id
+  if (!leagueId) {
+    console.error(`Missing league ID for fixture ${fixture.externalId} (leagueExternalId=${fixture.leagueExternalId})`);
+    return null;
+  }
+
   if (!homeTeamId || !awayTeamId) {
-    console.error(`Missing team IDs for fixture ${fixture.externalId}`);
+    console.error(`Missing team IDs for fixture ${fixture.externalId} (home=${fixture.homeTeamExternalId}, away=${fixture.awayTeamExternalId})`);
     return null;
   }
 

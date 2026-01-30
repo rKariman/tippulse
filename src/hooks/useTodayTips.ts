@@ -102,16 +102,9 @@ export function useTodayFixturesForTips() {
   return useQuery({
     queryKey: ["fixtures", "today-tips"],
     queryFn: async () => {
-      // Use Europe/Rome timezone for date calculations
+      // Client-local full-day boundaries (prevents hiding earlier matches today)
       const now = new Date();
-      const romeFormatter = new Intl.DateTimeFormat("en-CA", {
-        timeZone: "Europe/Rome",
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-      });
-      const todayRome = romeFormatter.format(now);
-      const today = new Date(todayRome + "T00:00:00+01:00");
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
 

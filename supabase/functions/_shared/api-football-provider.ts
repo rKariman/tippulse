@@ -25,6 +25,9 @@ async function fetchWithRetry(
         },
       });
 
+       // Required logging / proof
+       console.log(`[api-football] GET ${url} -> ${response.status}`);
+
       // Handle rate limiting (API-Football uses remaining requests header)
       const remainingRequests = response.headers.get('x-ratelimit-requests-remaining');
       if (remainingRequests && parseInt(remainingRequests, 10) < 5) {
@@ -129,11 +132,13 @@ export function createApiFootballProvider(apiKey: string): MatchDataProvider {
     },
 
     async getTeamsByLeague(leagueId: string): Promise<Team[]> {
-      // Get current season year
-      const currentYear = new Date().getFullYear();
+      // API-Football seasons are typically the starting year of the season.
+      // For Jan–Jul, European leagues are usually in the previous year season (e.g. Jan 2026 => season 2025).
+      const now = new Date();
+      const season = now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear() - 1;
       
       const response = await fetchWithRetry(
-        `${API_FOOTBALL_BASE_URL}/teams?league=${leagueId}&season=${currentYear}`,
+        `${API_FOOTBALL_BASE_URL}/teams?league=${leagueId}&season=${season}`,
         apiKey
       );
       const data = await response.json();
@@ -160,19 +165,15 @@ export function createApiFootballProvider(apiKey: string): MatchDataProvider {
       const { dateFrom, dateTo, leagueId } = params;
       const allFixtures: Fixture[] = [];
 
-      // Get current season (football season spans two years)
-      const now = new Date();
-      const currentYear = now.getFullYear();
-      // If we're in the second half of the year (Aug-Dec), use current year
-      // If we're in the first half (Jan-Jul), use previous year
-      const season = now.getMonth() >= 7 ? currentYear : currentYear - 1;
-
       // API-Football requires fetching by single date, so we iterate
       const startDate = new Date(dateFrom);
       const endDate = new Date(dateTo);
 
       for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
         const dateStr = d.toISOString().split('T')[0];
+
+        // Compute season per *target date* (not per "now") to avoid Jan/Feb season drift.
+        const season = d.getMonth() >= 7 ? d.getFullYear() : d.getFullYear() - 1;
         
         let url = `${API_FOOTBALL_BASE_URL}/fixtures?date=${dateStr}&season=${season}`;
         if (leagueId) {

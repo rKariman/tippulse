@@ -5,22 +5,12 @@ import { createApiFootballProvider } from '../_shared/api-football-provider.ts';
 import { logSyncRun } from '../_shared/upsert.ts';
 import type { SyncResult } from '../_shared/types.ts';
 
-function getDateRangeInRome(): { dateFrom: string; dateTo: string } {
+function getDateRangeUtcDays(daysAhead: number): { dateFrom: string; dateTo: string } {
   const now = new Date();
-  const romeFormatter = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Europe/Rome',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  });
-  
-  const dateFrom = romeFormatter.format(now);
-  
-  // Add 7 days for the end date
+  const dateFrom = now.toISOString().split('T')[0];
   const endDate = new Date(now);
-  endDate.setDate(endDate.getDate() + 7);
-  const dateTo = romeFormatter.format(endDate);
-  
+  endDate.setDate(endDate.getDate() + daysAhead);
+  const dateTo = endDate.toISOString().split('T')[0];
   return { dateFrom, dateTo };
 }
 
@@ -76,17 +66,19 @@ Deno.serve(async (req) => {
       upsertedFixtures: 0,
     };
 
-    const { dateFrom, dateTo } = getDateRangeInRome();
-    console.log(`Fetching fixtures from ${dateFrom} to ${dateTo} (Rome timezone)`);
+    const { dateFrom, dateTo } = getDateRangeUtcDays(7);
+    console.log(`Fetching fixtures from ${dateFrom} to ${dateTo}`);
 
     // Fetch fixtures for each allowed league for the next 7 days
     let allFixtures: any[] = [];
     for (const leagueId of ALLOWED_LEAGUE_IDS) {
+      console.log(`[sync-today] league=${leagueId} dateFrom=${dateFrom} dateTo=${dateTo}`);
       const fixtures = await provider.getFixturesByDateRange({
         dateFrom,
         dateTo,
         leagueId,
       });
+      console.log(`[sync-today] league=${leagueId} fetchedCount=${fixtures.length}`);
       allFixtures = allFixtures.concat(fixtures);
       // Rate limit between leagues
       await new Promise(resolve => setTimeout(resolve, 200));

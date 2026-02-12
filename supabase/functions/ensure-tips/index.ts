@@ -1,33 +1,34 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
+const SITE_ORIGIN = "https://tippulse.com";
+
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": SITE_ORIGIN,
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-interface MatchTip {
-  id: string;
-  fixture_id: string;
-  tip_type: string;
-  title: string;
-  confidence: string;
-  odds: string | null;
-  reasoning: string;
-  created_at: string;
-  expires_at: string;
+function jsonResponse(body: Record<string, unknown>, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
 }
 
-interface PlayerTip {
-  id: string;
-  fixture_id: string;
-  player_name: string;
-  title: string;
-  confidence: string;
-  reasoning: string;
-  created_at: string;
-  expires_at: string;
+function extractJson(raw: string): unknown {
+  let cleaned = raw.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
+  const start = cleaned.search(/[\{\[]/);
+  const end = cleaned.lastIndexOf(start !== -1 && cleaned[start] === "[" ? "]" : "}");
+  if (start === -1 || end === -1) throw new Error("No JSON found in AI response");
+  cleaned = cleaned.substring(start, end + 1);
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    cleaned = cleaned.replace(/,\s*}/g, "}").replace(/,\s*]/g, "]");
+    return JSON.parse(cleaned);
+  }
 }
 
 serve(async (req) => {
@@ -35,99 +36,84 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || Deno.env.get("SB_URL");
+  const SUPABASE_SERVICE_ROLE_KEY =
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || Deno.env.get("SB_SERVICE_ROLE_KEY");
+  const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+  const OPENAI_MODEL = Deno.env.get("OPENAI_MODEL") || "gpt-4o-mini";
+
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    return jsonResponse({ ok: false, error: "Missing Supabase configuration" }, 500);
+  }
+  if (!OPENAI_API_KEY) {
+    return jsonResponse({ ok: false, error: "OPENAI_API_KEY is not configured" }, 500);
+  }
+
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+  let fixtureId: string;
   try {
-    const { fixture_id } = await req.json();
-    
-    if (!fixture_id) {
-      return new Response(
-        JSON.stringify({ error: "fixture_id is required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    const body = await req.json();
+    fixtureId = body.fixture_id;
+    if (!fixtureId) {
+      return jsonResponse({ ok: false, error: "fixture_id is required" }, 400);
     }
+  } catch {
+    return jsonResponse({ ok: false, error: "Invalid request body" }, 400);
+  }
 
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-      throw new Error("Missing Supabase configuration");
-    }
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
-    }
-
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-
-    // Check for existing valid cached tips
+  try {
+    // ── 1. Check for cached, non-expired tips ──
     const now = new Date().toISOString();
-    
-    const [matchTipsResult, playerTipsResult] = await Promise.all([
-      supabase
-        .from("match_tips")
-        .select("*")
-        .eq("fixture_id", fixture_id)
-        .gt("expires_at", now),
-      supabase
-        .from("player_tips")
-        .select("*")
-        .eq("fixture_id", fixture_id)
-        .gt("expires_at", now),
+    const [matchCache, playerCache] = await Promise.all([
+      supabase.from("match_tips").select("*").eq("fixture_id", fixtureId).gt("expires_at", now),
+      supabase.from("player_tips").select("*").eq("fixture_id", fixtureId).gt("expires_at", now),
     ]);
 
-    // If we have valid cached tips, return them
     if (
-      matchTipsResult.data &&
-      matchTipsResult.data.length >= 2 &&
-      playerTipsResult.data &&
-      playerTipsResult.data.length >= 2
+      matchCache.data && matchCache.data.length >= 2 &&
+      playerCache.data && playerCache.data.length >= 1
     ) {
-      console.log(`[ensure-tips] Returning cached tips for fixture ${fixture_id}`);
-      return new Response(
-        JSON.stringify({
-          matchTips: matchTipsResult.data,
-          playerTips: playerTipsResult.data,
-          cached: true,
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      console.log(`[ensure-tips] Cache hit for fixture ${fixtureId}`);
+      return jsonResponse({
+        ok: true,
+        matchTips: matchCache.data,
+        playerTips: playerCache.data,
+      });
     }
 
-    // Need to generate tips - first get fixture info
+    // ── 2. Fetch fixture + joined team/league info ──
     const { data: fixture, error: fixtureError } = await supabase
       .from("fixtures")
       .select(`
-        id,
-        kickoff_at,
-        venue,
+        id, kickoff_at, venue, status,
         home_team:home_team_id(name),
         away_team:away_team_id(name),
         league:league_id(name)
       `)
-      .eq("id", fixture_id)
+      .eq("id", fixtureId)
       .single();
 
     if (fixtureError || !fixture) {
       console.error("[ensure-tips] Fixture not found:", fixtureError);
-      return new Response(
-        JSON.stringify({ error: "Fixture not found" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return jsonResponse({ ok: false, error: "Fixture not found" }, 404);
     }
 
     const homeTeam = (fixture.home_team as any)?.name || "Home Team";
     const awayTeam = (fixture.away_team as any)?.name || "Away Team";
     const league = (fixture.league as any)?.name || "League";
 
-    console.log(`[ensure-tips] Generating tips for: ${homeTeam} vs ${awayTeam}`);
+    console.log(`[ensure-tips] Generating tips: ${homeTeam} vs ${awayTeam}`);
 
-    // Generate tips using AI
-    const prompt = `You are a football betting expert. Analyze this match and provide betting tips:
+    // ── 3. Call OpenAI ──
+    const prompt = `You are a football betting expert. Analyze this upcoming match and provide betting tips.
 
 Match: ${homeTeam} vs ${awayTeam}
 League: ${league}
 Venue: ${fixture.venue || "TBC"}
+Kickoff: ${fixture.kickoff_at}
 
-Generate EXACTLY this JSON structure (no markdown, just valid JSON):
+Return ONLY valid JSON with this exact structure (no markdown, no extra text):
 {
   "matchTips": [
     {
@@ -135,14 +121,14 @@ Generate EXACTLY this JSON structure (no markdown, just valid JSON):
       "title": "Under 2.5 Match Goals",
       "confidence": "high",
       "odds": "8/11",
-      "reasoning": "Both teams have averaged under 2 goals per game in their last 5 matches..."
+      "reasoning": "1-2 sentences explaining the tip"
     },
     {
       "tip_type": "correct_score",
       "title": "Draw 1-1",
       "confidence": "low",
       "odds": "11/2",
-      "reasoning": "Historical data shows these teams often draw..."
+      "reasoning": "1-2 sentences explaining the tip"
     }
   ],
   "playerTips": [
@@ -150,40 +136,32 @@ Generate EXACTLY this JSON structure (no markdown, just valid JSON):
       "player_name": "Player Name",
       "title": "Player Name To Have 1+ Shots On Target",
       "confidence": "medium",
-      "reasoning": "This player averages 2 shots per game..."
+      "reasoning": "1-2 sentences"
     },
     {
       "player_name": "Another Player",
-      "title": "Another Player To Be Shown A Card",
-      "confidence": "medium",
-      "reasoning": "High foul rate in recent matches..."
-    },
-    {
-      "player_name": "Third Player",
-      "title": "Third Player To Score Anytime",
+      "title": "Another Player To Score Anytime",
       "confidence": "low",
-      "reasoning": "Top scorer for the team..."
+      "reasoning": "1-2 sentences"
     }
   ]
 }
 
-Requirements:
-- matchTips: EXACTLY 2 tips. First should be high/medium confidence, second can be low confidence
+Rules:
+- matchTips: EXACTLY 2 tips
 - playerTips: 2-4 tips with realistic player names from these teams
-- confidence: must be "high", "medium", or "low"
-- odds: fractional format like "8/11", "11/2", "5/1" etc
-- reasoning: 1-2 sentences explaining the tip
+- confidence: "high", "medium", or "low"
+- odds: fractional format like "8/11", "11/2"
+- Return ONLY the JSON object`;
 
-Return ONLY the JSON, no other text.`;
-
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: OPENAI_MODEL,
         messages: [
           { role: "system", content: "You are a football betting expert. Return only valid JSON." },
           { role: "user", content: prompt },
@@ -193,67 +171,53 @@ Return ONLY the JSON, no other text.`;
     });
 
     if (!aiResponse.ok) {
-      if (aiResponse.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Rate limit exceeded, please try again later" }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      if (aiResponse.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "AI credits exhausted" }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      const errorText = await aiResponse.text();
-      console.error("[ensure-tips] AI error:", aiResponse.status, errorText);
-      throw new Error(`AI request failed: ${aiResponse.status}`);
+      const errText = await aiResponse.text();
+      console.error(`[ensure-tips] OpenAI error ${aiResponse.status}:`, errText);
+      // DO NOT wipe existing tips on AI failure
+      return jsonResponse({
+        ok: false,
+        error: `AI request failed (${aiResponse.status})`,
+        matchTips: matchCache.data || [],
+        playerTips: playerCache.data || [],
+      }, 502);
     }
 
     const aiData = await aiResponse.json();
     const content = aiData.choices?.[0]?.message?.content || "";
-    
-    // Extract JSON from response (handle markdown code blocks)
-    let jsonStr = content;
-    const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (jsonMatch) {
-      jsonStr = jsonMatch[1];
-    }
-    
-    let tips;
+
+    let tips: any;
     try {
-      tips = JSON.parse(jsonStr.trim());
-    } catch (parseError) {
+      tips = extractJson(content);
+    } catch (parseErr) {
       console.error("[ensure-tips] Failed to parse AI response:", content);
-      throw new Error("Failed to parse AI response");
+      return jsonResponse({
+        ok: false,
+        error: "Failed to parse AI response",
+        matchTips: matchCache.data || [],
+        playerTips: playerCache.data || [],
+      }, 502);
     }
 
-    // Calculate expiry (24 hours from now)
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    // ── 4. Prepare rows ──
+    const kickoff = new Date(fixture.kickoff_at);
+    const expiresAt = new Date(kickoff.getTime() + 48 * 60 * 60 * 1000).toISOString();
 
-    // Delete old tips for this fixture
-    await Promise.all([
-      supabase.from("match_tips").delete().eq("fixture_id", fixture_id),
-      supabase.from("player_tips").delete().eq("fixture_id", fixture_id),
-    ]);
-
-    // Insert new tips
-    const matchTipsToInsert = (tips.matchTips || []).slice(0, 2).map((tip: any) => ({
-      fixture_id,
-      tip_type: tip.tip_type || "match_result",
-      title: tip.title,
-      confidence: tip.confidence || "medium",
-      odds: tip.odds || null,
-      reasoning: tip.reasoning,
+    const matchTipsRows = (tips.matchTips || []).slice(0, 2).map((t: any) => ({
+      fixture_id: fixtureId,
+      tip_type: t.tip_type || "match_result",
+      title: t.title,
+      confidence: t.confidence || "medium",
+      odds: t.odds || null,
+      reasoning: t.reasoning,
       expires_at: expiresAt,
     }));
 
-    // Ensure we have exactly 2 match tips
-    while (matchTipsToInsert.length < 2) {
-      matchTipsToInsert.push({
-        fixture_id,
+    // Pad to exactly 2 match tips
+    while (matchTipsRows.length < 2) {
+      matchTipsRows.push({
+        fixture_id: fixtureId,
         tip_type: "match_result",
-        title: matchTipsToInsert.length === 0 ? "Home Win" : "Draw",
+        title: matchTipsRows.length === 0 ? "Home Win" : "Draw",
         confidence: "low",
         odds: null,
         reasoning: "Insufficient data for confident prediction.",
@@ -261,56 +225,72 @@ Return ONLY the JSON, no other text.`;
       });
     }
 
-    const playerTipsToInsert = (tips.playerTips || []).slice(0, 4).map((tip: any) => ({
-      fixture_id,
-      player_name: tip.player_name,
-      title: tip.title,
-      confidence: tip.confidence || "medium",
-      reasoning: tip.reasoning,
+    const playerTipsRows = (tips.playerTips || []).slice(0, 4).map((t: any) => ({
+      fixture_id: fixtureId,
+      player_name: t.player_name,
+      title: t.title,
+      confidence: t.confidence || "medium",
+      reasoning: t.reasoning,
       expires_at: expiresAt,
     }));
 
-    // Ensure we have at least 2 player tips
-    while (playerTipsToInsert.length < 2) {
-      playerTipsToInsert.push({
-        fixture_id,
-        player_name: "Key Player",
-        title: "Player To Make 1+ Tackles",
-        confidence: "low",
-        reasoning: "General prediction based on position.",
-        expires_at: expiresAt,
-      });
-    }
-
-    const [insertedMatchTips, insertedPlayerTips] = await Promise.all([
-      supabase.from("match_tips").insert(matchTipsToInsert).select(),
-      supabase.from("player_tips").insert(playerTipsToInsert).select(),
+    // ── 5. Delete old + insert new (transactional-ish) ──
+    await Promise.all([
+      supabase.from("match_tips").delete().eq("fixture_id", fixtureId),
+      supabase.from("player_tips").delete().eq("fixture_id", fixtureId),
     ]);
 
-    if (insertedMatchTips.error) {
-      console.error("[ensure-tips] Error inserting match tips:", insertedMatchTips.error);
+    const [insertedMatch, insertedPlayer] = await Promise.all([
+      supabase.from("match_tips").insert(matchTipsRows).select(),
+      playerTipsRows.length > 0
+        ? supabase.from("player_tips").insert(playerTipsRows).select()
+        : Promise.resolve({ data: [], error: null }),
+    ]);
+
+    if (insertedMatch.error) {
+      console.error("[ensure-tips] Insert match_tips error:", insertedMatch.error);
       throw new Error("Failed to save match tips");
     }
-    if (insertedPlayerTips.error) {
-      console.error("[ensure-tips] Error inserting player tips:", insertedPlayerTips.error);
+    if (insertedPlayer.error) {
+      console.error("[ensure-tips] Insert player_tips error:", insertedPlayer.error);
       throw new Error("Failed to save player tips");
     }
 
-    console.log(`[ensure-tips] Generated and cached tips for fixture ${fixture_id}`);
+    // ── 6. Log to tip_generation_runs ──
+    await supabase.from("tip_generation_runs").insert({
+      run_type: "ensure_tips",
+      total_fixtures: 1,
+      generated: 1,
+      reused: 0,
+      errors: 0,
+      params: { fixture_id: fixtureId, model: OPENAI_MODEL },
+      finished_at: new Date().toISOString(),
+    });
 
-    return new Response(
-      JSON.stringify({
-        matchTips: insertedMatchTips.data,
-        playerTips: insertedPlayerTips.data,
-        cached: false,
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    console.log(`[ensure-tips] Generated tips for ${fixtureId}`);
+
+    return jsonResponse({
+      ok: true,
+      matchTips: insertedMatch.data,
+      playerTips: insertedPlayer.data || [],
+    });
   } catch (error) {
     console.error("[ensure-tips] Error:", error);
-    return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+
+    // Log failure
+    await supabase.from("tip_generation_runs").insert({
+      run_type: "ensure_tips",
+      total_fixtures: 1,
+      generated: 0,
+      errors: 1,
+      error_details: error instanceof Error ? error.message : String(error),
+      params: { fixture_id: fixtureId },
+      finished_at: new Date().toISOString(),
+    }).catch(() => {});
+
+    return jsonResponse({
+      ok: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    }, 500);
   }
 });

@@ -30,9 +30,15 @@ export const ALLOWED_LEAGUE_IDS = new Set(Object.keys(LEAGUE_PRIORITY_ORDER).map
 // The expected order of league IDs for debugging
 export const EXPECTED_LEAGUE_ORDER = [1, 2, 3, 140, 143, 39, 45, 78, 81, 61, 94, 307, 179];
 
+// Fallback map for slugs that don't have a trailing numeric ID
+const SLUG_TO_LEAGUE_ID: Record<string, number> = {
+  'la-liga': 140,
+  'persian-gulf-pro-league': 179,
+};
+
 /**
  * Extract league ID from slug (e.g., "premier-league-39" → 39)
- * Handles both string slugs and potential external_id fields
+ * Falls back to a known slug map for slugs without numeric suffixes
  */
 export function extractLeagueIdFromSlug(slug: string | undefined | null): number | null {
   if (!slug) return null;
@@ -41,6 +47,11 @@ export function extractLeagueIdFromSlug(slug: string | undefined | null): number
   const match = slug.match(/-(\d+)$/);
   if (match) {
     return parseInt(match[1], 10);
+  }
+  
+  // Fallback for slugs without a numeric suffix
+  if (SLUG_TO_LEAGUE_ID[slug] !== undefined) {
+    return SLUG_TO_LEAGUE_ID[slug];
   }
   
   return null;

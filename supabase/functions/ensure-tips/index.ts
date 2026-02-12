@@ -1,19 +1,29 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
-const SITE_ORIGIN = "https://tippulse.com";
+const ALLOWED_ORIGINS = new Set([
+  "https://tippulse.com",
+  "https://www.tippulse.com",
+  "https://tippulse.lovable.app",
+  "https://id-preview--326fc996-c6e0-4b8c-96e1-460501409830.lovable.app",
+  "https://326fc996-c6e0-4b8c-96e1-460501409830.lovableproject.com",
+]);
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": SITE_ORIGIN,
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get("origin") ?? "";
+  const allowOrigin = ALLOWED_ORIGINS.has(origin) ? origin : "https://tippulse.com";
+  return {
+    "Access-Control-Allow-Origin": allowOrigin,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Vary": "Origin",
+  };
+}
 
-function jsonResponse(body: Record<string, unknown>, status = 200) {
+function jsonResponse(body: Record<string, unknown>, req: Request, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
   });
 }
 
@@ -33,7 +43,7 @@ function extractJson(raw: string): unknown {
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { status: 200, headers: getCorsHeaders(req) });
   }
 
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || Deno.env.get("SB_URL");
@@ -43,10 +53,10 @@ serve(async (req) => {
   const OPENAI_MODEL = Deno.env.get("OPENAI_MODEL") || "gpt-4o-mini";
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-    return jsonResponse({ ok: false, error: "Missing Supabase configuration" }, 500);
+    return jsonResponse({ ok: false, error: "Missing Supabase configuration" }, req, 500);
   }
   if (!OPENAI_API_KEY) {
-    return jsonResponse({ ok: false, error: "OPENAI_API_KEY is not configured" }, 500);
+    return jsonResponse({ ok: false, error: "OPENAI_API_KEY is not configured" }, req, 500);
   }
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -56,10 +66,10 @@ serve(async (req) => {
     const body = await req.json();
     fixtureId = body.fixture_id;
     if (!fixtureId) {
-      return jsonResponse({ ok: false, error: "fixture_id is required" }, 400);
+      return jsonResponse({ ok: false, error: "fixture_id is required" }, req, 400);
     }
   } catch {
-    return jsonResponse({ ok: false, error: "Invalid request body" }, 400);
+    return jsonResponse({ ok: false, error: "Invalid request body" }, req, 400);
   }
 
   try {
@@ -79,7 +89,7 @@ serve(async (req) => {
         ok: true,
         matchTips: matchCache.data,
         playerTips: playerCache.data,
-      });
+      }, req);
     }
 
     // ── 2. Fetch fixture + joined team/league info ──
@@ -96,7 +106,7 @@ serve(async (req) => {
 
     if (fixtureError || !fixture) {
       console.error("[ensure-tips] Fixture not found:", fixtureError);
-      return jsonResponse({ ok: false, error: "Fixture not found" }, 404);
+      return jsonResponse({ ok: false, error: "Fixture not found" }, req, 404);
     }
 
     const homeTeam = (fixture.home_team as any)?.name || "Home Team";
@@ -179,7 +189,7 @@ Rules:
         error: `AI request failed (${aiResponse.status})`,
         matchTips: matchCache.data || [],
         playerTips: playerCache.data || [],
-      }, 502);
+      }, req, 502);
     }
 
     const aiData = await aiResponse.json();
@@ -195,7 +205,7 @@ Rules:
         error: "Failed to parse AI response",
         matchTips: matchCache.data || [],
         playerTips: playerCache.data || [],
-      }, 502);
+      }, req, 502);
     }
 
     // ── 4. Prepare rows ──
@@ -273,7 +283,7 @@ Rules:
       ok: true,
       matchTips: insertedMatch.data,
       playerTips: insertedPlayer.data || [],
-    });
+    }, req);
   } catch (error) {
     console.error("[ensure-tips] Error:", error);
 
@@ -291,6 +301,6 @@ Rules:
     return jsonResponse({
       ok: false,
       error: error instanceof Error ? error.message : "Unknown error",
-    }, 500);
+    }, req, 500);
   }
 });

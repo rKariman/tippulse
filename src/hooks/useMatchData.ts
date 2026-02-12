@@ -1,7 +1,7 @@
 // Data hooks for fetching real match data from Supabase
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { getLeaguePriority, sortLeagues, logLeagueOrder } from "@/lib/leaguePriority";
+import { getLeaguePriority, sortLeagues, logLeagueOrder, ALLOWED_LEAGUE_IDS, extractLeagueIdFromSlug, NATIONAL_MATCHES_LABEL } from "@/lib/leaguePriority";
 
 export interface Fixture {
   id: string;
@@ -279,19 +279,24 @@ export function useFixturesByLeague(leagueSlug?: string | null, dateRange?: "tod
       
       if (error) throw error;
 
-      // Group by league - ONLY include fixtures that have a league (from allowed leagues)
+      // Group by league - known leagues keep their name, others go under "National Matches"
       const grouped: Record<string, { league: League; fixtures: Fixture[] }> = {};
       let skippedNoLeague = 0;
       (data as Fixture[]).forEach((fixture) => {
         if (fixture.league) {
-          const leagueName = fixture.league.name;
-          if (!grouped[leagueName]) {
-            grouped[leagueName] = {
-              league: fixture.league as League,
+          const leagueId = extractLeagueIdFromSlug(fixture.league.slug);
+          const isKnown = leagueId !== null && ALLOWED_LEAGUE_IDS.has(leagueId);
+          
+          const groupKey = isKnown ? fixture.league.name : NATIONAL_MATCHES_LABEL;
+          if (!grouped[groupKey]) {
+            grouped[groupKey] = {
+              league: isKnown
+                ? (fixture.league as League)
+                : { id: 'national', name: NATIONAL_MATCHES_LABEL, slug: 'national-matches', country: null, is_featured: null },
               fixtures: [],
             };
           }
-          grouped[leagueName].fixtures.push(fixture);
+          grouped[groupKey].fixtures.push(fixture);
         } else {
           skippedNoLeague++;
         }

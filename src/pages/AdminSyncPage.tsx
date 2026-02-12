@@ -157,8 +157,10 @@ export default function AdminSyncPage() {
       if (error) throw error;
       const matchCount = data?.matchTips?.length ?? 0;
       const playerCount = data?.playerTips?.length ?? 0;
+      const tipSummary = data?.matchTips?.map((t: any) => `• ${t.title} (${t.confidence})`).join("\n") || "";
+      const playerSummary = data?.playerTips?.map((t: any) => `• ${t.player_name}: ${t.title}`).join("\n") || "";
       const msg = data?.ok
-        ? `✅ OK — ${matchCount} match tips, ${playerCount} player tips`
+        ? `✅ Model: gpt-4o-mini | ${matchCount} match tips, ${playerCount} player tips\n\nMatch:\n${tipSummary}\n\nPlayers:\n${playerSummary}`
         : `❌ Failed — ${data?.error || "Unknown error"}`;
       setTestResult(msg);
       toast({ title: data?.ok ? "Tips generated" : "Generation failed", description: msg });

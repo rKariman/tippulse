@@ -3,7 +3,7 @@
  * Used across Predictions, Home, Tips, and any league-grouped lists
  *
  * Priority is based on API-Football league IDs (extracted from slug suffix)
- * Order: FIFA WC → UCL → UEL → PL → La Liga → Serie A → Bundesliga → Ligue 1 → …
+ * Order: FIFA WC → UCL → UEL → La Liga → Copa del Rey → PL → FA Cup → Bundesliga → DFB Pokal → Ligue 1 → Primeira Liga → Saudi Pro → Persian Gulf
  */
 
 // League priority order by API-Football league ID
@@ -12,23 +12,26 @@ export const LEAGUE_PRIORITY_ORDER: Record<number, number> = {
   1: 1,      // FIFA World Cup
   2: 2,      // UEFA Champions League
   3: 3,      // UEFA Europa League
-  39: 4,     // Premier League
-  140: 5,    // La Liga
-  135: 6,    // Serie A
-  78: 7,     // Bundesliga
-  61: 8,     // Ligue 1
-  94: 9,     // Primeira Liga (Portugal)
-  307: 10,   // Saudi Pro League
-  253: 11,   // MLS
-  179: 12,   // Scottish Premiership
-  45: 13,    // FA Cup
-  143: 14,   // Copa del Rey
-  137: 15,   // Coppa Italia
-  81: 16,    // DFB Pokal
+  140: 4,    // La Liga
+  143: 5,    // Copa del Rey
+  39: 6,     // Premier League
+  45: 7,     // FA Cup
+  78: 8,     // Bundesliga
+  81: 9,     // DFB Pokal
+  61: 10,    // Ligue 1
+  94: 11,    // Primeira Liga (Portugal)
+  307: 12,   // Saudi Pro League
+  179: 13,   // Persian Gulf Pro League
 };
 
+/** Set of all known/allowed league IDs */
+export const ALLOWED_LEAGUE_IDS = new Set(Object.keys(LEAGUE_PRIORITY_ORDER).map(Number));
+
 // The expected order of league IDs for debugging
-export const EXPECTED_LEAGUE_ORDER = [1, 2, 3, 39, 140, 135, 78, 61, 94, 307, 253, 179, 45, 143, 137, 81];
+export const EXPECTED_LEAGUE_ORDER = [1, 2, 3, 140, 143, 39, 45, 78, 81, 61, 94, 307, 179];
+
+/** Label used to group any league not in the priority list */
+export const NATIONAL_MATCHES_LABEL = 'National Matches';
 
 /**
  * Extract league ID from slug (e.g., "premier-league-39" → 39)

@@ -138,8 +138,8 @@ export default function PredictionsPage() {
                   {dateFilter === "upcoming" && "No upcoming matches from featured leagues."}
                 </p>
                 <p className="text-sm text-ink-400 mt-1">
-                  Only matches from Premier League, La Liga, Serie A, Bundesliga, Ligue 1, Champions League, Saudi Pro
-                  League, and Persian Gulf Pro League are shown.
+                  Matches from La Liga, Premier League, Bundesliga, Ligue 1, Champions League, Europa League,
+                  and other featured competitions are shown.
                 </p>
               </div>
             )}

@@ -23,14 +23,19 @@ function createSlug(name: string): string {
 
 // Allowed league IDs (API-Football)
 const ALLOWED_LEAGUE_IDS = new Set([
+  '1',    // FIFA World Cup
   '2',    // UEFA Champions League
-  '39',   // England Premier League
-  '140',  // Spain La Liga
-  '135',  // Italy Serie A
-  '78',   // Germany Bundesliga
-  '61',   // France Ligue 1
+  '3',    // UEFA Europa League
+  '140',  // La Liga
+  '143',  // Copa del Rey
+  '39',   // Premier League
+  '45',   // FA Cup
+  '78',   // Bundesliga
+  '81',   // DFB Pokal
+  '61',   // Ligue 1
+  '94',   // Primeira Liga
   '307',  // Saudi Pro League
-  '290',  // Iran Persian Gulf Pro League
+  '179',  // Persian Gulf Pro League
 ]);
 
 Deno.serve(async (req) => {

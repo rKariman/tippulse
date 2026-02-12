@@ -30,9 +30,6 @@ export const ALLOWED_LEAGUE_IDS = new Set(Object.keys(LEAGUE_PRIORITY_ORDER).map
 // The expected order of league IDs for debugging
 export const EXPECTED_LEAGUE_ORDER = [1, 2, 3, 140, 143, 39, 45, 78, 81, 61, 94, 307, 179];
 
-/** Label used to group any league not in the priority list */
-export const NATIONAL_MATCHES_LABEL = 'National Matches';
-
 /**
  * Extract league ID from slug (e.g., "premier-league-39" → 39)
  * Handles both string slugs and potential external_id fields

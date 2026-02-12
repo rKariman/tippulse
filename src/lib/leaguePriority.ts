@@ -1,26 +1,34 @@
 /**
  * Shared league priority ordering utility
  * Used across Predictions, Home, Tips, and any league-grouped lists
- * 
+ *
  * Priority is based on API-Football league IDs (extracted from slug suffix)
- * Order: UCL → Premier League → La Liga → Serie A → Bundesliga → Ligue 1 → Saudi Pro League → Iran Persian Gulf Pro League
+ * Order: FIFA WC → UCL → UEL → PL → La Liga → Serie A → Bundesliga → Ligue 1 → …
  */
 
 // League priority order by API-Football league ID
 // Lower number = higher priority (more important league)
 export const LEAGUE_PRIORITY_ORDER: Record<number, number> = {
-  2: 1,      // UCL
-  39: 2,     // Premier League
-  140: 3,    // La Liga
-  135: 4,    // Serie A
-  78: 5,     // Bundesliga
-  61: 6,     // Ligue 1
-  307: 7,    // Saudi Pro League
-  290: 8,    // Iran Persian Gulf Pro League
+  1: 1,      // FIFA World Cup
+  2: 2,      // UEFA Champions League
+  3: 3,      // UEFA Europa League
+  39: 4,     // Premier League
+  140: 5,    // La Liga
+  135: 6,    // Serie A
+  78: 7,     // Bundesliga
+  61: 8,     // Ligue 1
+  94: 9,     // Primeira Liga (Portugal)
+  307: 10,   // Saudi Pro League
+  253: 11,   // MLS
+  179: 12,   // Scottish Premiership
+  45: 13,    // FA Cup
+  143: 14,   // Copa del Rey
+  137: 15,   // Coppa Italia
+  81: 16,    // DFB Pokal
 };
 
 // The expected order of league IDs for debugging
-export const EXPECTED_LEAGUE_ORDER = [2, 39, 140, 135, 78, 61, 307, 290];
+export const EXPECTED_LEAGUE_ORDER = [1, 2, 3, 39, 140, 135, 78, 61, 94, 307, 253, 179, 45, 143, 137, 81];
 
 /**
  * Extract league ID from slug (e.g., "premier-league-39" → 39)

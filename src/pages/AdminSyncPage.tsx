@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, RefreshCw, Calendar, Shield } from "lucide-react";
+import { Loader2, RefreshCw, Calendar, Shield, Zap } from "lucide-react";
 import { FixtureDebugWidget } from "@/components/admin/FixtureDebugWidget";
 
 interface SyncRun {
@@ -42,6 +42,9 @@ export default function AdminSyncPage() {
     new Date(Date.now() + 86400000).toISOString().split("T")[0]
   );
   const [selectedLeague, setSelectedLeague] = useState<string>("");
+  const [testFixtureId, setTestFixtureId] = useState("");
+  const [testResult, setTestResult] = useState<string | null>(null);
+  const [testLoading, setTestLoading] = useState(false);
   const { toast } = useToast();
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -140,6 +143,34 @@ export default function AdminSyncPage() {
     callSyncEndpoint("sync-fixtures", body);
   };
 
+  const handleTestOpenAI = async () => {
+    if (!testFixtureId.trim()) {
+      toast({ title: "Enter a fixture ID", variant: "destructive" });
+      return;
+    }
+    setTestLoading(true);
+    setTestResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("ensure-tips", {
+        body: { fixture_id: testFixtureId.trim() },
+      });
+      if (error) throw error;
+      const matchCount = data?.matchTips?.length ?? 0;
+      const playerCount = data?.playerTips?.length ?? 0;
+      const msg = data?.ok
+        ? `✅ OK — ${matchCount} match tips, ${playerCount} player tips`
+        : `❌ Failed — ${data?.error || "Unknown error"}`;
+      setTestResult(msg);
+      toast({ title: data?.ok ? "Tips generated" : "Generation failed", description: msg });
+    } catch (err: any) {
+      const msg = `❌ Error: ${err.message || err}`;
+      setTestResult(msg);
+      toast({ title: "Request failed", description: msg, variant: "destructive" });
+    } finally {
+      setTestLoading(false);
+    }
+  };
+
   if (!isAuthenticated) {
     return (
       <Layout>
@@ -197,7 +228,7 @@ export default function AdminSyncPage() {
           </Button>
         </div>
 
-        <div className="grid md:grid-cols-4 gap-6 mb-8">
+        <div className="grid md:grid-cols-5 gap-6 mb-8">
           {/* Quick Sync */}
           <Card>
             <CardHeader>
@@ -325,6 +356,40 @@ export default function AdminSyncPage() {
                 {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 Sync Fixtures
               </Button>
+            </CardContent>
+          </Card>
+
+          {/* Test OpenAI */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Test OpenAI</CardTitle>
+              <CardDescription>
+                Call ensure-tips for a fixture and verify AI generation
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="space-y-1">
+                <Label htmlFor="testFixtureId" className="text-xs">Fixture ID</Label>
+                <Input
+                  id="testFixtureId"
+                  value={testFixtureId}
+                  onChange={(e) => setTestFixtureId(e.target.value)}
+                  placeholder="UUID"
+                  className="font-mono text-xs"
+                />
+              </div>
+              <Button
+                onClick={handleTestOpenAI}
+                disabled={testLoading}
+                variant="secondary"
+                className="w-full"
+              >
+                {testLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Zap className="h-4 w-4 mr-2" />}
+                Test Tips Generation
+              </Button>
+              {testResult && (
+                <p className="text-xs font-mono break-all bg-muted p-2 rounded">{testResult}</p>
+              )}
             </CardContent>
           </Card>
         </div>

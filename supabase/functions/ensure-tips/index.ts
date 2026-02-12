@@ -113,7 +113,7 @@ serve(async (req) => {
     const awayTeam = (fixture.away_team as any)?.name || "Away Team";
     const league = (fixture.league as any)?.name || "League";
 
-    console.log(`[ensure-tips] Generating tips: ${homeTeam} vs ${awayTeam}`);
+    console.log(`[ensure-tips] Generating tips: ${homeTeam} vs ${awayTeam} | model=${OPENAI_MODEL}`);
 
     // ── 3. Call OpenAI ──
     const prompt = `You are a football betting expert. Analyze this upcoming match and provide betting tips.
@@ -179,6 +179,8 @@ Rules:
         temperature: 0.7,
       }),
     });
+
+    console.log(`[ensure-tips] OpenAI response status=${aiResponse.status}`);
 
     if (!aiResponse.ok) {
       const errText = await aiResponse.text();

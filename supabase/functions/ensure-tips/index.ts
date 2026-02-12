@@ -97,6 +97,7 @@ serve(async (req) => {
       .from("fixtures")
       .select(`
         id, kickoff_at, venue, status,
+        home_team_id, away_team_id,
         home_team:home_team_id(name),
         away_team:away_team_id(name),
         league:league_id(name)
@@ -113,15 +114,75 @@ serve(async (req) => {
     const awayTeam = (fixture.away_team as any)?.name || "Away Team";
     const league = (fixture.league as any)?.name || "League";
 
-    console.log(`[ensure-tips] Generating tips: ${homeTeam} vs ${awayTeam} | model=${OPENAI_MODEL}`);
+    // ── 2b. Fetch recent form (last 5 completed matches per team) ──
+    const formatForm = (matches: any[], teamId: string) => {
+      if (!matches || matches.length === 0) return "No recent data available.";
+      return matches.map((m: any) => {
+        const isHome = m.home_team_id === teamId;
+        const ht = (m.home_team as any)?.name || "?";
+        const at = (m.away_team as any)?.name || "?";
+        const score = `${m.home_score ?? "?"}-${m.away_score ?? "?"}`;
+        const result = m.home_score != null && m.away_score != null
+          ? (isHome
+              ? (m.home_score > m.away_score ? "W" : m.home_score < m.away_score ? "L" : "D")
+              : (m.away_score > m.home_score ? "W" : m.away_score < m.home_score ? "L" : "D"))
+          : "?";
+        return `  ${ht} ${score} ${at} (${result})`;
+      }).join("\n");
+    };
+
+    const finishedStatuses = ["FT", "AET", "PEN", "finished"];
+    const [homeForm, awayForm] = await Promise.all([
+      supabase.from("fixtures")
+        .select("home_team_id, away_team_id, home_score, away_score, kickoff_at, home_team:home_team_id(name), away_team:away_team_id(name)")
+        .or(`home_team_id.eq.${fixture.home_team_id},away_team_id.eq.${fixture.home_team_id}`)
+        .in("status", finishedStatuses)
+        .lt("kickoff_at", fixture.kickoff_at)
+        .order("kickoff_at", { ascending: false })
+        .limit(5),
+      supabase.from("fixtures")
+        .select("home_team_id, away_team_id, home_score, away_score, kickoff_at, home_team:home_team_id(name), away_team:away_team_id(name)")
+        .or(`home_team_id.eq.${fixture.away_team_id},away_team_id.eq.${fixture.away_team_id}`)
+        .in("status", finishedStatuses)
+        .lt("kickoff_at", fixture.kickoff_at)
+        .order("kickoff_at", { ascending: false })
+        .limit(5),
+    ]);
+
+    const homeFormStr = formatForm(homeForm.data || [], fixture.home_team_id);
+    const awayFormStr = formatForm(awayForm.data || [], fixture.away_team_id);
+
+    // ── 2c. Head-to-head (last 3 meetings) ──
+    const { data: h2hData } = await supabase.from("fixtures")
+      .select("home_team_id, away_team_id, home_score, away_score, kickoff_at, home_team:home_team_id(name), away_team:away_team_id(name)")
+      .or(`and(home_team_id.eq.${fixture.home_team_id},away_team_id.eq.${fixture.away_team_id}),and(home_team_id.eq.${fixture.away_team_id},away_team_id.eq.${fixture.home_team_id})`)
+      .in("status", finishedStatuses)
+      .lt("kickoff_at", fixture.kickoff_at)
+      .order("kickoff_at", { ascending: false })
+      .limit(3);
+
+    const h2hStr = (h2hData && h2hData.length > 0)
+      ? h2hData.map((m: any) => `  ${(m.home_team as any)?.name} ${m.home_score}-${m.away_score} ${(m.away_team as any)?.name}`).join("\n")
+      : "No previous meetings in database.";
+
+    console.log(`[ensure-tips] Generating tips: ${homeTeam} vs ${awayTeam} | model=${OPENAI_MODEL} | homeForm=${homeForm.data?.length || 0} awayForm=${awayForm.data?.length || 0} h2h=${h2hData?.length || 0}`);
 
     // ── 3. Call OpenAI ──
-    const prompt = `You are a football betting expert. Analyze this upcoming match and provide betting tips.
+    const prompt = `You are a football betting expert. Analyze this upcoming match using the stats provided and give specific, data-backed betting tips.
 
 Match: ${homeTeam} vs ${awayTeam}
 League: ${league}
 Venue: ${fixture.venue || "TBC"}
 Kickoff: ${fixture.kickoff_at}
+
+${homeTeam} – Recent Form (last 5):
+${homeFormStr}
+
+${awayTeam} – Recent Form (last 5):
+${awayFormStr}
+
+Head-to-Head (last 3 meetings):
+${h2hStr}
 
 Return ONLY valid JSON with this exact structure (no markdown, no extra text):
 {
@@ -131,14 +192,14 @@ Return ONLY valid JSON with this exact structure (no markdown, no extra text):
       "title": "Under 2.5 Match Goals",
       "confidence": "high",
       "odds": "8/11",
-      "reasoning": "1-2 sentences explaining the tip"
+      "reasoning": "2-3 sentences referencing the form/h2h data above"
     },
     {
       "tip_type": "correct_score",
       "title": "Draw 1-1",
       "confidence": "low",
       "odds": "11/2",
-      "reasoning": "1-2 sentences explaining the tip"
+      "reasoning": "2-3 sentences referencing the form/h2h data above"
     }
   ],
   "playerTips": [
@@ -146,22 +207,23 @@ Return ONLY valid JSON with this exact structure (no markdown, no extra text):
       "player_name": "Player Name",
       "title": "Player Name To Have 1+ Shots On Target",
       "confidence": "medium",
-      "reasoning": "1-2 sentences"
+      "reasoning": "2-3 sentences with specific reasoning"
     },
     {
       "player_name": "Another Player",
       "title": "Another Player To Score Anytime",
       "confidence": "low",
-      "reasoning": "1-2 sentences"
+      "reasoning": "2-3 sentences with specific reasoning"
     }
   ]
 }
 
 Rules:
-- matchTips: EXACTLY 2 tips
-- playerTips: 2-4 tips with realistic player names from these teams
+- matchTips: EXACTLY 2 tips. Reference the form/h2h data in reasoning.
+- playerTips: 2-4 tips with real current squad players from these teams
 - confidence: "high", "medium", or "low"
 - odds: fractional format like "8/11", "11/2"
+- DO NOT say "limited data" — use whatever stats are provided
 - Return ONLY the JSON object`;
 
     const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {

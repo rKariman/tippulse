@@ -111,7 +111,7 @@ export default function TipsPage() {
   const marketTitle = marketLabels[market] || "Football Tips";
 
   const { data: fixtures, isLoading: fixturesLoading, error: fixturesError } = useTodayFixturesForTips();
-  const { data: tips, isLoading: tipsLoading } = useGenerateAITips(fixtures);
+  const { data: tips = {}, isLoading: tipsLoading } = useGenerateAITips(fixtures);
 
   return (
     <Layout>

@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useState, useEffect } from "react";
 import { getLeaguePriority, logLeagueOrder } from "@/lib/leaguePriority";
 
 export interface TipFixture {
@@ -37,7 +36,6 @@ export interface AITip {
 function sortAndPrioritizeFixtures(fixtures: TipFixture[]): TipFixture[] {
   const sorted = fixtures
     .sort((a, b) => {
-      // First, sort by league priority using shared utility
       const priorityA = getLeaguePriority(a.league?.slug);
       const priorityB = getLeaguePriority(b.league?.slug);
       
@@ -45,7 +43,6 @@ function sortAndPrioritizeFixtures(fixtures: TipFixture[]): TipFixture[] {
         return priorityA - priorityB;
       }
       
-      // Then by kickoff time
       const kickoffA = new Date(a.kickoff_at);
       const kickoffB = new Date(b.kickoff_at);
       
@@ -53,7 +50,6 @@ function sortAndPrioritizeFixtures(fixtures: TipFixture[]): TipFixture[] {
     })
     .slice(0, 20);
   
-  // Debug log to verify order
   const uniqueLeagues = Array.from(new Set(sorted.map(f => f.league).filter(Boolean)));
   logLeagueOrder("useTodayTips", uniqueLeagues as { slug: string; name: string }[]);
   
@@ -64,7 +60,6 @@ export function useTodayFixturesForTips() {
   return useQuery({
     queryKey: ["fixtures", "today-tips"],
     queryFn: async () => {
-      // Client-local full-day boundaries (prevents hiding earlier matches today)
       const now = new Date();
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const tomorrow = new Date(today);
@@ -88,89 +83,64 @@ export function useTodayFixturesForTips() {
 
       if (error) throw error;
       
-      // Sort and prioritize to get top 20
       return sortAndPrioritizeFixtures(data as TipFixture[]);
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 }
 
+/**
+ * Fetches AI tips for fixtures using ensure-tips edge function + match_tips cache.
+ * Calls ensure-tips for each fixture (which returns cached tips or generates new ones).
+ */
 export function useGenerateAITips(fixtures: TipFixture[] | undefined) {
-  const [tips, setTips] = useState<Record<string, AITip>>({});
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  return useQuery({
+    queryKey: ["ai-tips", fixtures?.map(f => f.id).join(",")],
+    queryFn: async () => {
+      if (!fixtures || fixtures.length === 0) return {};
 
-  useEffect(() => {
-    if (!fixtures || fixtures.length === 0) return;
-    
-    const generateTips = async () => {
-      setIsLoading(true);
-      setError(null);
-      
-      try {
-        const response = await supabase.functions.invoke("generate-tips", {
-          body: {
-            fixtures: fixtures.map((f) => ({
-              id: f.id,
-              homeTeam: f.home_team?.name || "Home Team",
-              awayTeam: f.away_team?.name || "Away Team",
-              league: f.league?.name || "Unknown League",
-              kickoffAt: f.kickoff_at,
-            })),
-          },
-        });
+      const tipsMap: Record<string, AITip> = {};
 
-        if (response.error) {
-          throw new Error(response.error.message);
-        }
+      // Fire ensure-tips calls in parallel (max 5 concurrent)
+      const batchSize = 5;
+      for (let i = 0; i < fixtures.length; i += batchSize) {
+        const batch = fixtures.slice(i, i + batchSize);
+        const results = await Promise.allSettled(
+          batch.map(async (fixture) => {
+            try {
+              const { data, error } = await supabase.functions.invoke("ensure-tips", {
+                body: { fixture_id: fixture.id },
+              });
 
-        const generatedTips = response.data?.tips as AITip[];
-        if (generatedTips) {
-          const tipsMap: Record<string, AITip> = {};
-          generatedTips.forEach((tip) => {
-            tipsMap[tip.fixtureId] = tip;
-          });
-          setTips(tipsMap);
-        }
-      } catch (err) {
-        console.error("Error generating tips:", err);
-        setError(err instanceof Error ? err.message : "Failed to generate tips");
-        
-        // Generate fallback tips client-side
-        const fallbackTips: Record<string, AITip> = {};
-        fixtures.forEach((fixture) => {
-          fallbackTips[fixture.id] = generateFallbackTip(fixture);
-        });
-        setTips(fallbackTips);
-      } finally {
-        setIsLoading(false);
+              if (error) throw error;
+
+              // Use first match tip as the primary AI tip
+              const matchTips = data?.matchTips || [];
+              if (matchTips.length > 0) {
+                const tip = matchTips[0];
+                const confidenceMap: Record<string, AITip["confidence"]> = {
+                  high: "High",
+                  medium: "Medium",
+                  low: "Low",
+                };
+                tipsMap[fixture.id] = {
+                  fixtureId: fixture.id,
+                  prediction: tip.title,
+                  reasoning: tip.reasoning,
+                  confidence: confidenceMap[tip.confidence] || "Medium",
+                  market: tip.tip_type === "correct_score" ? "Correct Score" : tip.tip_type === "match_result" ? "Match Result" : tip.tip_type,
+                };
+              }
+            } catch (err) {
+              console.warn(`[useTodayTips] Failed to get tips for ${fixture.id}:`, err);
+            }
+          })
+        );
       }
-    };
 
-    generateTips();
-  }, [fixtures]);
-
-  return { tips, isLoading, error };
-}
-
-function generateFallbackTip(fixture: TipFixture): AITip {
-  const markets = [
-    { type: "Match Result", predictions: ["Home Win", "Draw", "Away Win"] },
-    { type: "Over/Under 2.5", predictions: ["Over 2.5 Goals", "Under 2.5 Goals"] },
-    { type: "BTTS", predictions: ["Both Teams to Score - Yes", "Both Teams to Score - No"] },
-  ];
-  
-  const market = markets[Math.floor(Math.random() * markets.length)];
-  const prediction = market.predictions[Math.floor(Math.random() * market.predictions.length)];
-  
-  const leaguePriority = getLeaguePriority(fixture.league?.slug);
-  const confidence: AITip["confidence"] = leaguePriority < 10 ? "Low" : "Low";
-  
-  return {
-    fixtureId: fixture.id,
-    prediction,
-    reasoning: `Based on general league analysis. ${fixture.home_team?.name || "Home"} hosts ${fixture.away_team?.name || "Away"} in ${fixture.league?.name || "this fixture"}. Limited statistical data available for detailed analysis.`,
-    confidence,
-    market: market.type,
-  };
+      return tipsMap;
+    },
+    enabled: !!fixtures && fixtures.length > 0,
+    staleTime: 10 * 60 * 1000, // 10 minutes
+  });
 }

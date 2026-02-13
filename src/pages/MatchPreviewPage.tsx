@@ -18,7 +18,7 @@ export default function MatchPreviewPage() {
 
   // Fetch tips fixtures and AI tips for sidebar
   const { data: tipsFixtures } = useTodayFixturesForTips();
-  const { tips: aiTips } = useGenerateAITips(tipsFixtures);
+  const { data: aiTips } = useGenerateAITips(tipsFixtures);
 
   // Fetch real free bets from Supabase
   const { data: freeBetsData } = useQuery({

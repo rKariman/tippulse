@@ -27,6 +27,43 @@ function ConfidenceBadge({ confidence }: { confidence: AITip["confidence"] }) {
   );
 }
 
+function TipSkeleton() {
+  return (
+    <div className="bg-ink-50 border border-ink-200 rounded-lg p-fluid-sm mt-3">
+      {/* AI analyzing badge */}
+      <div className="flex items-center gap-2 mb-3">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-brand-100 border border-brand-200 text-brand-700 text-xs font-medium animate-pulse">
+          <span>🤖</span>
+          <span>AI is analyzing this match…</span>
+        </span>
+      </div>
+
+      {/* Skeleton header row */}
+      <div className="flex flex-col gap-2 xs:flex-row xs:items-start xs:justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-4 bg-ink-200 rounded animate-pulse" />
+          <div className="h-4 w-16 bg-ink-200 rounded animate-pulse" />
+        </div>
+        <div className="h-5 w-28 bg-ink-200 rounded-full animate-pulse" />
+      </div>
+
+      {/* Skeleton prediction pill */}
+      <div className="mb-3">
+        <div className="h-7 w-36 bg-ink-200 rounded animate-pulse" />
+      </div>
+
+      {/* Animated typing text */}
+      <div className="space-y-1.5">
+        <p className="text-fluid-sm text-ink-400 italic animate-pulse">
+          Analyzing recent form and market patterns…
+        </p>
+        <div className="h-3 bg-ink-100 rounded w-full animate-pulse" />
+        <div className="h-3 bg-ink-100 rounded w-4/5 animate-pulse" />
+      </div>
+    </div>
+  );
+}
+
 function TipMatchCard({ fixture, tip }: { fixture: TipFixture; tip?: AITip }) {
   const kickoffTime = new Date(fixture.kickoff_at).toLocaleTimeString("en-GB", {
     hour: "2-digit",
@@ -74,7 +111,7 @@ function TipMatchCard({ fixture, tip }: { fixture: TipFixture; tip?: AITip }) {
 
         {/* AI Tip */}
         {tip ? (
-          <div className="bg-ink-50 border border-ink-200 rounded-lg p-fluid-sm mt-3">
+          <div className="bg-ink-50 border border-ink-200 rounded-lg p-fluid-sm mt-3 animate-fade-in">
             <div className="flex flex-col gap-2 xs:flex-row xs:items-start xs:justify-between mb-2">
               <div className="flex items-center gap-2">
                 <TrendingUp size={16} className="text-brand-600" />
@@ -95,11 +132,7 @@ function TipMatchCard({ fixture, tip }: { fixture: TipFixture; tip?: AITip }) {
             </p>
           </div>
         ) : (
-          <div className="bg-ink-50 border border-ink-200 rounded-lg p-fluid-sm mt-3 animate-pulse">
-            <div className="h-4 bg-ink-200 rounded w-1/3 mb-2"></div>
-            <div className="h-3 bg-ink-200 rounded w-full mb-1"></div>
-            <div className="h-3 bg-ink-200 rounded w-2/3"></div>
-          </div>
+          <TipSkeleton />
         )}
       </div>
     </div>

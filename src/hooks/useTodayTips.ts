@@ -124,12 +124,21 @@ export function useGenerateAITips(fixtures: TipFixture[] | undefined) {
                   low: "Low",
                 };
                 const marketLabels: Record<string, string> = {
+                  match_result: "Match Result",
+                  double_chance: "Double Chance",
+                  btts: "Both Teams To Score",
+                  over_under: "Over/Under Goals",
+                  correct_score: "Correct Score",
+                  total_cards: "Total Cards",
+                  total_corners: "Total Corners",
+                  total_fouls: "Total Fouls",
+                  half_time: "Half-Time Result",
+                  clean_sheet: "Clean Sheet",
+                  win_to_nil: "Win to Nil",
+                  first_to_score: "First to Score",
+                  handicap: "Handicap",
                   bet_of_the_day: "Bet of the Day",
                   accumulator: "Accumulator Tip",
-                  btts: "Both Teams To Score",
-                  correct_score: "Correct Score",
-                  over_under: "Over/Under Goals",
-                  double_chance: "Double Chance",
                 };
                 tipsMap[fixture.id] = {
                   fixtureId: fixture.id,

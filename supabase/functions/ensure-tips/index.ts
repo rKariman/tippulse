@@ -173,14 +173,18 @@ serve(async (req) => {
     const currentMonth = new Date().getMonth() + 1;
     const currentSeason = currentMonth >= 7 ? `${currentYear}/${currentYear + 1}` : `${currentYear - 1}/${currentYear}`;
 
-    const prompt = `You are a world-class football betting analyst. Today's date is ${currentDate}. The current football season is ${currentSeason}.
+    const prompt = `You are a world-class football betting analyst with deep knowledge of every team, player, and league. Today's date is ${currentDate}. The current football season is ${currentSeason}.
 
-CRITICAL: All player references MUST be players who are CURRENTLY registered and playing for these teams in the ${currentSeason} season. Do NOT reference players from previous seasons or who have transferred away. If you are unsure whether a player is still at the club, do NOT include them.
+YOUR TASK: Use YOUR OWN knowledge of these teams, their current squads, recent performances, playing styles, managerial tactics, injury news, and historical tendencies to predict what will happen in this match. Do your own research from your training data — do not rely only on the stats below.
+
+CRITICAL: All player references MUST be players CURRENTLY registered and playing for these teams in the ${currentSeason} season. Do NOT reference players from previous seasons or who have transferred away. If unsure, do NOT include them.
 
 Match: ${homeTeam} vs ${awayTeam}
 League: ${league}
 Venue: ${fixture.venue || "TBC"}
 Kickoff: ${fixture.kickoff_at}
+
+Database form data (use as supporting evidence, but rely on your own knowledge too):
 
 ${homeTeam} – Recent Form (last 5):
 ${homeFormStr}
@@ -192,57 +196,82 @@ Head-to-Head (last 3 meetings):
 ${h2hStr}
 
 INSTRUCTIONS:
-1. Analyze form, head-to-head, home/away advantage, and league context thoroughly.
-2. Select EXACTLY ONE main tip from these markets ONLY:
-   - Bet of the Day (e.g. "Home Win", "Away Win", "Draw")
-   - Accumulator Tip (a safe pick for accumulators, e.g. "Home or Draw", "Over 0.5 Goals")
-   - Both Teams To Score (Yes or No)
-   - Correct Score (be specific and realistic, e.g. "2-1", "1-0", "0-0")
-   - Over/Under Goals (Over/Under 1.5, 2.5, or 3.5)
-   - Double Chance (Home/Draw, Away/Draw, Home/Away)
 
-3. Pick the market where you see the STRONGEST statistical edge. Do NOT default to the same market every time.
-4. Your tip_type must be one of: "bet_of_the_day", "accumulator", "btts", "correct_score", "over_under", "double_chance".
+1. Use your knowledge of these teams' current season form, squad depth, injuries, tactics, and tendencies to make predictions.
 
-5. Confidence levels — be honest:
-   - "high" = strong statistical evidence, you would bet your own money
+2. Select EXACTLY ONE match tip from these betting markets:
+   MATCH MARKETS (pick the one with the strongest edge):
+   - Match Result: "Home Win", "Away Win", "Draw"
+   - Double Chance: "Home or Draw", "Away or Draw", "Home or Away"
+   - Both Teams To Score: "BTTS - Yes", "BTTS - No"
+   - Over/Under Goals: "Over 1.5 Goals", "Over 2.5 Goals", "Over 3.5 Goals", "Under 1.5 Goals", "Under 2.5 Goals", "Under 3.5 Goals"
+   - Correct Score: e.g. "2-1", "1-0", "0-0"
+   - Total Cards: "Over 3.5 Cards", "Over 4.5 Cards", "Over 5.5 Cards"
+   - Total Corners: "Over 7.5 Corners", "Over 8.5 Corners", "Over 9.5 Corners", "Over 10.5 Corners"
+   - Total Fouls: "Over 15.5 Fouls", "Over 20.5 Fouls", "Over 25.5 Fouls"
+   - Half-Time Result: "Home Leading at HT", "Away Leading at HT", "Draw at HT"
+   - Clean Sheet: "${homeTeam} Clean Sheet - Yes", "${awayTeam} Clean Sheet - Yes"
+   - Win to Nil: "${homeTeam} Win to Nil", "${awayTeam} Win to Nil"
+   - First Team to Score: "${homeTeam} to Score First", "${awayTeam} to Score First"
+   - Handicap: e.g. "${homeTeam} -1.5", "${awayTeam} +1.5"
+
+3. Your tip_type must be one of: "match_result", "double_chance", "btts", "over_under", "correct_score", "total_cards", "total_corners", "total_fouls", "half_time", "clean_sheet", "win_to_nil", "first_to_score", "handicap".
+
+4. Pick the market where you see the STRONGEST edge based on your knowledge. Do NOT default to the same market every time. Vary your picks.
+
+5. Confidence levels — be brutally honest:
+   - "high" = you would bet your own money, strong evidence
    - "medium" = reasonable case but some uncertainty
-   - "low" = speculative value pick, long shot
+   - "low" = speculative value pick
 
-6. Reasoning: 3-5 lines maximum. Reference SPECIFIC scores, streaks, or patterns from the data. Directly justify why this market was chosen over others. No generic filler text. No emojis.
+6. Reasoning: 3-5 lines. Reference SPECIFIC facts: recent results, goal-scoring records, defensive stats, disciplinary records, corner averages, tactical matchups. Justify why THIS market over others.
 
-7. If form data is limited, use football knowledge of the teams, league, and tendencies. NEVER mention "limited data" or "lack of information".
+7. NEVER mention "limited data" or "lack of information". Use your football knowledge confidently.
 
-8. Also provide 2-4 player tips with REAL players who are CURRENTLY in the squad for the ${currentSeason} season. Double-check each player is at the correct club RIGHT NOW (${currentDate}). Players who transferred away in previous windows must NOT be included.
+8. Provide 2-4 PLAYER TIPS with REAL players CURRENTLY at these clubs in ${currentSeason}.
+   PLAYER MARKETS (pick the best ones):
+   - Anytime Goalscorer
+   - First Goalscorer
+   - 1+ Shots On Target
+   - 2+ Shots On Target
+   - 3+ Shots On Target
+   - To Be Booked (Yellow Card)
+   - To Be Sent Off (Red Card)
+   - 1+ Assists
+   - 2+ Tackles
+   - 1+ Fouls Committed
+   - To Score or Assist
+   - Player Over 0.5 Goals
+
+   For each player tip, explain WHY this player in THIS market based on their current season stats, role, and tendencies.
 
 Return ONLY valid JSON (no markdown):
 {
   "matchTips": [
     {
-      "tip_type": "btts",
-      "title": "Both Teams To Score - Yes",
+      "tip_type": "total_corners",
+      "title": "Over 9.5 Corners",
       "confidence": "medium",
       "odds": "4/5",
-      "reasoning": "3-5 lines referencing specific data"
+      "reasoning": "3-5 lines with specific facts justifying this pick"
     }
   ],
   "playerTips": [
     {
-      "player_name": "Real Current Player Name",
-      "title": "Real Current Player Name To Score Anytime",
+      "player_name": "Current Player Name",
+      "title": "Current Player Name - Anytime Goalscorer",
       "confidence": "medium",
-      "reasoning": "2-3 sentences referencing the player's current form and role"
+      "reasoning": "2-3 sentences with specific current season stats and role"
     }
   ]
 }
 
 Rules:
-- matchTips: EXACTLY 1 tip. Choose the single best market.
+- matchTips: EXACTLY 1 tip. Choose the single best market from the full list above.
 - playerTips: 2-4 tips with REAL players currently at these clubs in ${currentSeason}.
-- Player tip markets: Anytime Goalscorer, 1+ Shots On Target, 2+ Shots On Target, To Be Booked, 1+ Assists.
 - odds: fractional UK format like "8/11", "6/4", "7/1"
-- NEVER reference players who have left the club. Verify each player is at the correct team.
-- NEVER say "limited data", "lack of information", or similar phrases.
+- NEVER reference players who have left the club.
+- NEVER say "limited data" or similar phrases.
 - No emojis in any field.
 - Return ONLY the JSON object`;
 

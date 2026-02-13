@@ -114,7 +114,7 @@ export function useGenerateAITips(fixtures: TipFixture[] | undefined) {
 
               if (error) throw error;
 
-              // Use first match tip as the primary AI tip
+              // Use the single main tip
               const matchTips = data?.matchTips || [];
               if (matchTips.length > 0) {
                 const tip = matchTips[0];
@@ -123,12 +123,20 @@ export function useGenerateAITips(fixtures: TipFixture[] | undefined) {
                   medium: "Medium",
                   low: "Low",
                 };
+                const marketLabels: Record<string, string> = {
+                  bet_of_the_day: "Bet of the Day",
+                  accumulator: "Accumulator Tip",
+                  btts: "Both Teams To Score",
+                  correct_score: "Correct Score",
+                  over_under: "Over/Under Goals",
+                  double_chance: "Double Chance",
+                };
                 tipsMap[fixture.id] = {
                   fixtureId: fixture.id,
                   prediction: tip.title,
                   reasoning: tip.reasoning,
                   confidence: confidenceMap[tip.confidence] || "Medium",
-                  market: tip.tip_type === "correct_score" ? "Correct Score" : tip.tip_type === "match_result" ? "Match Result" : tip.tip_type,
+                  market: marketLabels[tip.tip_type] || tip.tip_type,
                 };
               }
             } catch (err) {

@@ -30,7 +30,7 @@ export default function HomePage() {
 
   // Fetch tips fixtures and generate AI tips for sidebar
   const { data: tipsFixtures } = useTodayFixturesForTips();
-  const { data: aiTips } = useGenerateAITips(tipsFixtures);
+  const { data: aiTips = {} } = useGenerateAITips(tipsFixtures);
 
   // Fetch real news posts from Supabase
   const { data: newsPostsData, isLoading: newsLoading } = useQuery({

@@ -168,7 +168,14 @@ serve(async (req) => {
     console.log(`[ensure-tips] Generating tips: ${homeTeam} vs ${awayTeam} | model=${OPENAI_MODEL} | homeForm=${homeForm.data?.length || 0} awayForm=${awayForm.data?.length || 0} h2h=${h2hData?.length || 0}`);
 
     // ── 3. Call OpenAI ──
-    const prompt = `You are a world-class football betting analyst. Analyze this match and provide the SINGLE BEST betting tip — the one with the highest expected value.
+    const currentDate = new Date().toISOString().split("T")[0];
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth() + 1;
+    const currentSeason = currentMonth >= 7 ? `${currentYear}/${currentYear + 1}` : `${currentYear - 1}/${currentYear}`;
+
+    const prompt = `You are a world-class football betting analyst. Today's date is ${currentDate}. The current football season is ${currentSeason}.
+
+CRITICAL: All player references MUST be players who are CURRENTLY registered and playing for these teams in the ${currentSeason} season. Do NOT reference players from previous seasons or who have transferred away. If you are unsure whether a player is still at the club, do NOT include them.
 
 Match: ${homeTeam} vs ${awayTeam}
 League: ${league}
@@ -206,7 +213,7 @@ INSTRUCTIONS:
 
 7. If form data is limited, use football knowledge of the teams, league, and tendencies. NEVER mention "limited data" or "lack of information".
 
-8. Also provide 2-4 player tips with REAL current squad players.
+8. Also provide 2-4 player tips with REAL players who are CURRENTLY in the squad for the ${currentSeason} season. Double-check each player is at the correct club RIGHT NOW (${currentDate}). Players who transferred away in previous windows must NOT be included.
 
 Return ONLY valid JSON (no markdown):
 {
@@ -221,19 +228,20 @@ Return ONLY valid JSON (no markdown):
   ],
   "playerTips": [
     {
-      "player_name": "Real Player Name",
-      "title": "Real Player Name To Score Anytime",
+      "player_name": "Real Current Player Name",
+      "title": "Real Current Player Name To Score Anytime",
       "confidence": "medium",
-      "reasoning": "2-3 sentences referencing the player's form and role"
+      "reasoning": "2-3 sentences referencing the player's current form and role"
     }
   ]
 }
 
 Rules:
 - matchTips: EXACTLY 1 tip. Choose the single best market.
-- playerTips: 2-4 tips with REAL current squad players.
+- playerTips: 2-4 tips with REAL players currently at these clubs in ${currentSeason}.
 - Player tip markets: Anytime Goalscorer, 1+ Shots On Target, 2+ Shots On Target, To Be Booked, 1+ Assists.
 - odds: fractional UK format like "8/11", "6/4", "7/1"
+- NEVER reference players who have left the club. Verify each player is at the correct team.
 - NEVER say "limited data", "lack of information", or similar phrases.
 - No emojis in any field.
 - Return ONLY the JSON object`;

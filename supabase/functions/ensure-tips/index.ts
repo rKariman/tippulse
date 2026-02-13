@@ -81,7 +81,7 @@ serve(async (req) => {
     ]);
 
     if (
-      matchCache.data && matchCache.data.length >= 2 &&
+      matchCache.data && matchCache.data.length >= 1 &&
       playerCache.data && playerCache.data.length >= 1
     ) {
       console.log(`[ensure-tips] Cache hit for fixture ${fixtureId}`);
@@ -168,7 +168,7 @@ serve(async (req) => {
     console.log(`[ensure-tips] Generating tips: ${homeTeam} vs ${awayTeam} | model=${OPENAI_MODEL} | homeForm=${homeForm.data?.length || 0} awayForm=${awayForm.data?.length || 0} h2h=${h2hData?.length || 0}`);
 
     // ── 3. Call OpenAI ──
-    const prompt = `You are a world-class football betting analyst working for a premium tipster platform. Your job is to provide the SINGLE BEST betting tip for this match — the one with the highest expected value.
+    const prompt = `You are a world-class football betting analyst. Analyze this match and provide the SINGLE BEST betting tip — the one with the highest expected value.
 
 Match: ${homeTeam} vs ${awayTeam}
 League: ${league}
@@ -185,46 +185,38 @@ Head-to-Head (last 3 meetings):
 ${h2hStr}
 
 INSTRUCTIONS:
-1. Analyze the form data, head-to-head record, home/away advantage, and league context.
-2. Provide EXACTLY 2 match tips that are DIFFERENT from each other. Choose from these markets:
-   - Match Result (Home Win, Draw, Away Win)
-   - Both Teams To Score (Yes/No)
-   - Over/Under 1.5, 2.5, or 3.5 Goals
+1. Analyze form, head-to-head, home/away advantage, and league context thoroughly.
+2. Select EXACTLY ONE main tip from these markets ONLY:
+   - Bet of the Day (e.g. "Home Win", "Away Win", "Draw")
+   - Accumulator Tip (a safe pick for accumulators, e.g. "Home or Draw", "Over 0.5 Goals")
+   - Both Teams To Score (Yes or No)
+   - Correct Score (be specific and realistic, e.g. "2-1", "1-0", "0-0")
+   - Over/Under Goals (Over/Under 1.5, 2.5, or 3.5)
    - Double Chance (Home/Draw, Away/Draw, Home/Away)
-   - Correct Score (be specific and realistic, e.g. 2-1, 3-0, 0-0)
-   - Half-Time/Full-Time
-   - Win To Nil
-   - First Half Over/Under 0.5 Goals
 
-3. The FIRST tip should be your BEST pick — the highest value bet you'd recommend to a friend. It should be from ANY market, not just goals.
-4. The SECOND tip should be a correct_score prediction.
-5. NEVER default to "Under 2.5 Goals" or "Draw 1-1" unless the data strongly supports it. Be creative and specific.
+3. Pick the market where you see the STRONGEST statistical edge. Do NOT default to the same market every time.
+4. Your tip_type must be one of: "bet_of_the_day", "accumulator", "btts", "correct_score", "over_under", "double_chance".
 
-6. Confidence levels — be honest and varied:
-   - "high" = strong statistical evidence from form + h2h, you'd bet your own money
+5. Confidence levels — be honest:
+   - "high" = strong statistical evidence, you would bet your own money
    - "medium" = reasonable case but some uncertainty
-   - "low" = speculative but value pick, long shot
+   - "low" = speculative value pick, long shot
 
-7. Reasoning must reference SPECIFIC results from the form/h2h data. Mention actual scores, winning/losing streaks, goals scored/conceded patterns.
+6. Reasoning: 3-5 lines maximum. Reference SPECIFIC scores, streaks, or patterns from the data. Directly justify why this market was chosen over others. No generic filler text. No emojis.
 
-8. If form data is limited, use your football knowledge of the teams, the league, and home/away tendencies to make an informed prediction. NEVER mention "limited data" or "lack of information" — just give your best expert opinion confidently.
+7. If form data is limited, use football knowledge of the teams, league, and tendencies. NEVER mention "limited data" or "lack of information".
 
-Return ONLY valid JSON (no markdown, no extra text):
+8. Also provide 2-4 player tips with REAL current squad players.
+
+Return ONLY valid JSON (no markdown):
 {
   "matchTips": [
     {
-      "tip_type": "match_result",
-      "title": "Home Win",
+      "tip_type": "btts",
+      "title": "Both Teams To Score - Yes",
       "confidence": "medium",
-      "odds": "6/5",
-      "reasoning": "2-3 sentences with specific data references"
-    },
-    {
-      "tip_type": "correct_score",
-      "title": "Home 2-1",
-      "confidence": "low",
-      "odds": "7/1",
-      "reasoning": "2-3 sentences with specific data references"
+      "odds": "4/5",
+      "reasoning": "3-5 lines referencing specific data"
     }
   ],
   "playerTips": [
@@ -232,18 +224,18 @@ Return ONLY valid JSON (no markdown, no extra text):
       "player_name": "Real Player Name",
       "title": "Real Player Name To Score Anytime",
       "confidence": "medium",
-      "reasoning": "2-3 sentences referencing the player's current form and role"
+      "reasoning": "2-3 sentences referencing the player's form and role"
     }
   ]
 }
 
 Rules:
-- matchTips: EXACTLY 2 tips. First = best value pick from any market. Second = correct_score.
-- The two tips MUST be from different markets.
-- playerTips: 2-4 tips with REAL current squad players from these specific teams.
+- matchTips: EXACTLY 1 tip. Choose the single best market.
+- playerTips: 2-4 tips with REAL current squad players.
 - Player tip markets: Anytime Goalscorer, 1+ Shots On Target, 2+ Shots On Target, To Be Booked, 1+ Assists.
 - odds: fractional UK format like "8/11", "6/4", "7/1"
 - NEVER say "limited data", "lack of information", or similar phrases.
+- No emojis in any field.
 - Return ONLY the JSON object`;
 
     const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -296,9 +288,9 @@ Rules:
     const kickoff = new Date(fixture.kickoff_at);
     const expiresAt = new Date(kickoff.getTime() + 48 * 60 * 60 * 1000).toISOString();
 
-    const matchTipsRows = (tips.matchTips || []).slice(0, 2).map((t: any) => ({
+    const matchTipsRows = (tips.matchTips || []).slice(0, 1).map((t: any) => ({
       fixture_id: fixtureId,
-      tip_type: t.tip_type || "match_result",
+      tip_type: t.tip_type || "bet_of_the_day",
       title: t.title,
       confidence: t.confidence || "medium",
       odds: t.odds || null,
@@ -306,12 +298,12 @@ Rules:
       expires_at: expiresAt,
     }));
 
-    // Pad to exactly 2 match tips
-    while (matchTipsRows.length < 2) {
+    // Pad to exactly 1 match tip if AI returned nothing
+    if (matchTipsRows.length < 1) {
       matchTipsRows.push({
         fixture_id: fixtureId,
-        tip_type: "match_result",
-        title: matchTipsRows.length === 0 ? "Home Win" : "Draw",
+        tip_type: "bet_of_the_day",
+        title: "Home Win",
         confidence: "low",
         odds: null,
         reasoning: "Insufficient data for confident prediction.",

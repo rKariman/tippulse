@@ -168,7 +168,7 @@ serve(async (req) => {
     console.log(`[ensure-tips] Generating tips: ${homeTeam} vs ${awayTeam} | model=${OPENAI_MODEL} | homeForm=${homeForm.data?.length || 0} awayForm=${awayForm.data?.length || 0} h2h=${h2hData?.length || 0}`);
 
     // ── 3. Call OpenAI ──
-    const prompt = `You are a football betting expert. Analyze this upcoming match using the stats provided and give specific, data-backed betting tips.
+    const prompt = `You are a world-class football betting analyst working for a premium tipster platform. Your job is to provide the SINGLE BEST betting tip for this match — the one with the highest expected value.
 
 Match: ${homeTeam} vs ${awayTeam}
 League: ${league}
@@ -184,46 +184,66 @@ ${awayFormStr}
 Head-to-Head (last 3 meetings):
 ${h2hStr}
 
-Return ONLY valid JSON with this exact structure (no markdown, no extra text):
+INSTRUCTIONS:
+1. Analyze the form data, head-to-head record, home/away advantage, and league context.
+2. Provide EXACTLY 2 match tips that are DIFFERENT from each other. Choose from these markets:
+   - Match Result (Home Win, Draw, Away Win)
+   - Both Teams To Score (Yes/No)
+   - Over/Under 1.5, 2.5, or 3.5 Goals
+   - Double Chance (Home/Draw, Away/Draw, Home/Away)
+   - Correct Score (be specific and realistic, e.g. 2-1, 3-0, 0-0)
+   - Half-Time/Full-Time
+   - Win To Nil
+   - First Half Over/Under 0.5 Goals
+
+3. The FIRST tip should be your BEST pick — the highest value bet you'd recommend to a friend. It should be from ANY market, not just goals.
+4. The SECOND tip should be a correct_score prediction.
+5. NEVER default to "Under 2.5 Goals" or "Draw 1-1" unless the data strongly supports it. Be creative and specific.
+
+6. Confidence levels — be honest and varied:
+   - "high" = strong statistical evidence from form + h2h, you'd bet your own money
+   - "medium" = reasonable case but some uncertainty
+   - "low" = speculative but value pick, long shot
+
+7. Reasoning must reference SPECIFIC results from the form/h2h data. Mention actual scores, winning/losing streaks, goals scored/conceded patterns.
+
+8. If form data is limited, use your football knowledge of the teams, the league, and home/away tendencies to make an informed prediction. NEVER mention "limited data" or "lack of information" — just give your best expert opinion confidently.
+
+Return ONLY valid JSON (no markdown, no extra text):
 {
   "matchTips": [
     {
       "tip_type": "match_result",
-      "title": "Under 2.5 Match Goals",
-      "confidence": "high",
-      "odds": "8/11",
-      "reasoning": "2-3 sentences referencing the form/h2h data above"
+      "title": "Home Win",
+      "confidence": "medium",
+      "odds": "6/5",
+      "reasoning": "2-3 sentences with specific data references"
     },
     {
       "tip_type": "correct_score",
-      "title": "Draw 1-1",
+      "title": "Home 2-1",
       "confidence": "low",
-      "odds": "11/2",
-      "reasoning": "2-3 sentences referencing the form/h2h data above"
+      "odds": "7/1",
+      "reasoning": "2-3 sentences with specific data references"
     }
   ],
   "playerTips": [
     {
-      "player_name": "Player Name",
-      "title": "Player Name To Have 1+ Shots On Target",
+      "player_name": "Real Player Name",
+      "title": "Real Player Name To Score Anytime",
       "confidence": "medium",
-      "reasoning": "2-3 sentences with specific reasoning"
-    },
-    {
-      "player_name": "Another Player",
-      "title": "Another Player To Score Anytime",
-      "confidence": "low",
-      "reasoning": "2-3 sentences with specific reasoning"
+      "reasoning": "2-3 sentences referencing the player's current form and role"
     }
   ]
 }
 
 Rules:
-- matchTips: EXACTLY 2 tips. Reference the form/h2h data in reasoning.
-- playerTips: 2-4 tips with real current squad players from these teams
-- confidence: "high", "medium", or "low"
-- odds: fractional format like "8/11", "11/2"
-- DO NOT say "limited data" — use whatever stats are provided
+- matchTips: EXACTLY 2 tips. First = best value pick from any market. Second = correct_score.
+- The two tips MUST be from different markets.
+- playerTips: 2-4 tips with REAL current squad players from these specific teams.
+- Player tip markets: Anytime Goalscorer, 1+ Shots On Target, 2+ Shots On Target, To Be Booked, 1+ Assists.
+- odds: fractional UK format like "8/11", "6/4", "7/1"
+- NEVER say "limited data", "lack of information", or similar phrases.
 - Return ONLY the JSON object`;
 
     const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {

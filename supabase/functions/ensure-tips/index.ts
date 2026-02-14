@@ -228,22 +228,24 @@ INSTRUCTIONS:
 
 7. NEVER mention "limited data" or "lack of information". Use your football knowledge confidently.
 
-8. Provide 2-4 PLAYER TIPS with REAL players CURRENTLY at these clubs in ${currentSeason}.
-   PLAYER MARKETS (pick the best ones):
-   - Anytime Goalscorer
-   - First Goalscorer
-   - 1+ Shots On Target
-   - 2+ Shots On Target
-   - 3+ Shots On Target
-   - To Be Booked (Yellow Card)
-   - To Be Sent Off (Red Card)
-   - 1+ Assists
-   - 2+ Tackles
-   - 1+ Fouls Committed
-   - To Score or Assist
-   - Player Over 0.5 Goals
+8. Provide EXACTLY 2 PLAYER TIPS with REAL players CURRENTLY at these clubs in ${currentSeason}.
+   You MUST pick from ONLY these player betting markets:
+    - "anytime_goalscorer" (Anytime Goalscorer)
+    - "first_goalscorer" (First Goalscorer)
+    - "2_plus_goals" (2+ Goals)
+    - "player_assist" (Player to Assist)
+    - "over_under_shots" (Over/Under Shots)
+    - "shots_on_target" (Shots on Target)
+    - "over_under_passes" (Over/Under Passes)
+    - "over_under_tackles" (Over/Under Tackles)
+    - "player_yellow_card" (Player to Receive a Yellow Card)
+    - "goal_and_assist" (Goal + Assist combo)
 
-   For each player tip, explain WHY this player in THIS market based on their current season stats, role, and tendencies.
+   For each player tip you MUST consider:
+   - The player's recent form (goals, shots, assists, cards, minutes played)
+   - The opponent's defensive weaknesses
+   - The player's role and position
+   Pick the 2 STRONGEST, most confident player bets from the list above.
 
 Return ONLY valid JSON (no markdown):
 {
@@ -259,16 +261,19 @@ Return ONLY valid JSON (no markdown):
   "playerTips": [
     {
       "player_name": "Current Player Name",
+      "bet_type": "anytime_goalscorer",
       "title": "Current Player Name - Anytime Goalscorer",
       "confidence": "medium",
-      "reasoning": "2-3 sentences with specific current season stats and role"
+      "reasoning": "2-3 sentences referencing recent form, matchup stats, or season data"
     }
   ]
 }
 
 Rules:
 - matchTips: EXACTLY 1 tip. Choose the single best market from the full list above.
-- playerTips: 2-4 tips with REAL players currently at these clubs in ${currentSeason}.
+- playerTips: EXACTLY 2 tips with REAL players currently at these clubs in ${currentSeason}.
+- bet_type MUST be one of the 10 allowed player markets listed above.
+- reasoning MUST reference specific form, matchup, or statistical data. Generic reasoning is NOT allowed.
 - odds: fractional UK format like "8/11", "6/4", "7/1"
 - NEVER reference players who have left the club.
 - NEVER say "limited data" or similar phrases.
@@ -348,7 +353,7 @@ Rules:
       });
     }
 
-    const playerTipsRows = (tips.playerTips || []).slice(0, 4).map((t: any) => ({
+    const playerTipsRows = (tips.playerTips || []).slice(0, 2).map((t: any) => ({
       fixture_id: fixtureId,
       player_name: t.player_name,
       title: t.title,

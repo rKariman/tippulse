@@ -41,9 +41,31 @@ function extractJson(raw: string): unknown {
   }
 }
 
+// Simple in-memory rate limiter (per-origin, resets on cold start)
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
+const RATE_LIMIT_MAX = 10; // max 10 requests per minute per origin
+
+function isRateLimited(key: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(key);
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(key, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return false;
+  }
+  entry.count++;
+  return entry.count > RATE_LIMIT_MAX;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: getCorsHeaders(req) });
+  }
+
+  // Rate limit by origin or IP
+  const origin = req.headers.get("origin") ?? "unknown";
+  if (isRateLimited(origin)) {
+    return jsonResponse({ ok: false, error: "Too many requests. Please try again later." }, req, 429);
   }
 
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || Deno.env.get("SB_URL");
@@ -53,10 +75,12 @@ serve(async (req) => {
   const OPENAI_MODEL = Deno.env.get("OPENAI_MODEL") || "gpt-4o-mini";
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-    return jsonResponse({ ok: false, error: "Missing Supabase configuration" }, req, 500);
+    console.error("[ensure-tips] Missing Supabase configuration");
+    return jsonResponse({ ok: false, error: "Service temporarily unavailable" }, req, 500);
   }
   if (!OPENAI_API_KEY) {
-    return jsonResponse({ ok: false, error: "OPENAI_API_KEY is not configured" }, req, 500);
+    console.error("[ensure-tips] OPENAI_API_KEY is not configured");
+    return jsonResponse({ ok: false, error: "Service temporarily unavailable" }, req, 500);
   }
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -333,7 +357,7 @@ Rules:
       // DO NOT wipe existing tips on AI failure
       return jsonResponse({
         ok: false,
-        error: `AI request failed (${aiResponse.status})`,
+        error: "Tip generation temporarily unavailable",
         matchTips: matchCache.data || [],
         playerTips: playerCache.data || [],
       }, req, 502);
@@ -349,7 +373,7 @@ Rules:
       console.error("[ensure-tips] Failed to parse AI response:", content);
       return jsonResponse({
         ok: false,
-        error: "Failed to parse AI response",
+        error: "Tip generation temporarily unavailable",
         matchTips: matchCache.data || [],
         playerTips: playerCache.data || [],
       }, req, 502);
@@ -447,7 +471,7 @@ Rules:
 
     return jsonResponse({
       ok: false,
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: "An internal error occurred. Please try again later.",
     }, req, 500);
   }
 });

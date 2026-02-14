@@ -222,7 +222,7 @@ INSTRUCTIONS:
 
 3. Your tip_type must be one of: "match_result", "double_chance", "btts", "over_under", "correct_score", "total_cards", "total_corners", "total_fouls", "half_time", "clean_sheet", "win_to_nil", "first_to_score", "handicap".
 
-4. Pick the market where you see the STRONGEST edge based on your knowledge. Do NOT default to the same market every time. Vary your picks.
+4. Pick the market where you see the STRONGEST edge based on your knowledge. CRITICAL: Do NOT default to corners or any single market. You MUST vary your picks — consider ALL 13 market categories equally. The example JSON below uses BTTS but that is just formatting; pick whichever market has the best edge for THIS specific match.
 
 5. Confidence levels — be brutally honest:
    - "high" = you would bet your own money, strong evidence
@@ -266,18 +266,18 @@ Return ONLY valid JSON (no markdown):
 {
   "matchTips": [
     {
-      "tip_type": "total_corners",
-      "title": "Over 9.5 Corners",
-      "confidence": "medium",
+      "tip_type": "btts",
+      "title": "BTTS - Yes",
+      "confidence": "high",
       "odds": "4/5",
       "reasoning": "3-5 lines with specific facts justifying this pick"
     }
   ],
   "playerTips": [
     {
-      "player_name": "Current Player Name",
-      "bet_type": "anytime_goalscorer",
-      "title": "Current Player Name - Anytime Goalscorer",
+      "player_name": "Player Currently At Club",
+      "bet_type": "shots_on_target",
+      "title": "Player Currently At Club - 1+ Shots on Target",
       "confidence": "medium",
       "reasoning": "2-3 sentences referencing recent form, matchup stats, or season data"
     }

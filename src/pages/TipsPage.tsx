@@ -1,4 +1,5 @@
 import { useParams } from "react-router-dom";
+import { SEO } from "@/components/SEO";
 import { Layout } from "@/components/layout/Layout";
 import { NewsletterWidget } from "@/components/widgets/NewsletterWidget";
 import { useTodayFixturesForTips, useGenerateAITips, TipFixture, AITip } from "@/hooks/useTodayTips";
@@ -148,6 +149,11 @@ export default function TipsPage() {
 
   return (
     <Layout>
+      <SEO
+        title={`${marketTitle} - Free Football Tips Today`}
+        description={`Today's ${marketTitle.toLowerCase()} with AI-powered analysis. Expert football betting tips for all major leagues updated daily.`}
+        canonical={`/tips/${market}`}
+      />
       <div className="container py-fluid-lg">
         {/* Page header */}
         <div className="mb-6">

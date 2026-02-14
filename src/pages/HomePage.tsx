@@ -1,4 +1,5 @@
 import { Layout } from "@/components/layout/Layout";
+import { SEO } from "@/components/SEO";
 import { MatchRow } from "@/components/cards/MatchRow";
 import { OfferCard } from "@/components/cards/OfferCard";
 import { ArticleCard } from "@/components/cards/ArticleCard";
@@ -103,6 +104,11 @@ export default function HomePage() {
 
   return (
     <Layout>
+      <SEO
+        title="Free Football Betting Tips & Predictions Today"
+        description="Get expert free football betting tips, match predictions, and accumulator picks daily. AI-powered insights for Premier League, La Liga, Champions League and more."
+        canonical="/"
+      />
       <div className="container py-fluid-lg">
         {/* Hero section */}
         <section className="mb-8">

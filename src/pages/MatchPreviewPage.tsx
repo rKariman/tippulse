@@ -1,4 +1,5 @@
 import { useParams, Link } from "react-router-dom";
+import { SEO } from "@/components/SEO";
 import { Layout } from "@/components/layout/Layout";
 import { PreviewTipBlock } from "@/components/cards/PreviewTipBlock";
 import { OfferCard } from "@/components/cards/OfferCard";
@@ -90,7 +91,11 @@ export default function MatchPreviewPage() {
 
   return (
     <Layout>
-      {/* Match header */}
+      <SEO
+        title={`${displayData.homeTeam} vs ${displayData.awayTeam} Preview & Prediction`}
+        description={`Match preview and prediction for ${displayData.homeTeam} vs ${displayData.awayTeam} in ${displayData.league}. Expert analysis, team news, and betting tips.`}
+        canonical={`/preview/${slug}`}
+      />
       <div className="bg-brand-800 text-white">
         <div className="container py-6">
           <div className="flex items-center gap-2 text-sm text-brand-200 mb-4">

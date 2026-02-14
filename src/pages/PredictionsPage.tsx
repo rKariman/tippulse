@@ -1,4 +1,5 @@
 import { Layout } from "@/components/layout/Layout";
+import { SEO } from "@/components/SEO";
 import { NewsletterWidget } from "@/components/widgets/NewsletterWidget";
 import { DateTabs } from "@/components/widgets/DateTabs";
 import { LeagueFilter } from "@/components/widgets/LeagueFilter";
@@ -60,6 +61,11 @@ export default function PredictionsPage() {
 
   return (
     <Layout>
+      <SEO
+        title="Football Match Predictions & Previews Today"
+        description="Today's football match predictions with expert analysis. Browse upcoming fixtures across Premier League, La Liga, Bundesliga, Serie A and more."
+        canonical="/predictions"
+      />
       <div className="container py-fluid-lg">
         {/* Page header */}
         <h1 className="text-fluid-2xl font-bold text-ink-900 mb-6">Today's Football Predictions</h1>

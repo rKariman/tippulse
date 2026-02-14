@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { SEO } from "@/components/SEO";
 import { useParams, Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { ChevronLeft, ChevronDown, Loader2, AlertTriangle } from "lucide-react";
@@ -162,6 +163,11 @@ export default function MatchDetailsPage() {
 
   return (
     <Layout>
+      <SEO
+        title={`${homeTeam} vs ${awayTeam} Tips & Predictions`}
+        description={`Expert betting tips for ${homeTeam} vs ${awayTeam}. AI-powered match predictions, player props, and best odds.`}
+        canonical={`/match/${slug}`}
+      />
       <div className="container py-fluid-lg">
         {/* Back link */}
         <Link

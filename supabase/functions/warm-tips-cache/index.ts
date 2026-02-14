@@ -302,7 +302,7 @@ serve(async (req) => {
     console.error("[warm-tips-cache] Error:", errMsg);
 
     return new Response(
-      JSON.stringify({ success: false, error: errMsg }),
+      JSON.stringify({ success: false, error: "An internal error occurred. Please try again later." }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

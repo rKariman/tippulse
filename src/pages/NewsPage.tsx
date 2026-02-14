@@ -1,4 +1,5 @@
 import { Layout } from "@/components/layout/Layout";
+import { SEO } from "@/components/SEO";
 import { ArticleCard } from "@/components/cards/ArticleCard";
 import { NewsletterWidget } from "@/components/widgets/NewsletterWidget";
 import { useState } from "react";
@@ -38,6 +39,11 @@ export default function NewsPage() {
 
   return (
     <Layout>
+      <SEO
+        title="Football Betting News & Expert Analysis"
+        description="Latest football news, transfer updates, and expert betting analysis. Stay informed with TipPulse's sports news coverage."
+        canonical="/news"
+      />
       <div className="container py-fluid-lg">
         {/* Page header */}
         <div className="mb-fluid-lg">

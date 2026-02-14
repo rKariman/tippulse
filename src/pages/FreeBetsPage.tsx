@@ -1,4 +1,5 @@
 import { Layout } from "@/components/layout/Layout";
+import { SEO } from "@/components/SEO";
 import { OfferCard } from "@/components/cards/OfferCard";
 import { NewsletterWidget } from "@/components/widgets/NewsletterWidget";
 import { useQuery } from "@tanstack/react-query";
@@ -33,6 +34,11 @@ export default function FreeBetsPage() {
 
   return (
     <Layout>
+      <SEO
+        title="Best Free Bets & Betting Offers February 2026"
+        description="Compare the best free bet offers and sign-up bonuses from top UK bookmakers. Exclusive new customer deals updated daily."
+        canonical="/free-bets"
+      />
       <div className="container py-6">
         {/* Page header */}
         <div className="mb-6">

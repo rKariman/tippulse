@@ -1,4 +1,5 @@
 import { useParams, Link } from "react-router-dom";
+import { SEO } from "@/components/SEO";
 import { Layout } from "@/components/layout/Layout";
 import { NewsletterWidget } from "@/components/widgets/NewsletterWidget";
 import { useQuery } from "@tanstack/react-query";
@@ -82,6 +83,12 @@ export default function ArticlePage() {
 
   return (
     <Layout>
+      <SEO
+        title={article.title}
+        description={article.excerpt || article.content.slice(0, 155)}
+        canonical={`/news/${article.slug}`}
+        ogType="article"
+      />
       <div className="container py-6">
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Main content */}

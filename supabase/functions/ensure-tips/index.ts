@@ -278,10 +278,10 @@ Return ONLY valid JSON (no markdown):
 {
   "matchTips": [
     {
-      "tip_type": "btts",
-      "title": "BTTS - Yes",
-      "confidence": "high",
-      "odds": "4/5",
+      "tip_type": "<one of the 13 market slugs>",
+      "title": "<human-readable selection>",
+      "confidence": "high|medium|low",
+      "odds": "fractional e.g. 8/11",
       "reasoning": "3-5 lines with specific facts justifying this pick"
     }
   ],
@@ -298,6 +298,8 @@ Return ONLY valid JSON (no markdown):
 
 Rules:
 - matchTips: EXACTLY 1 tip. Choose the single best market from the full list above.
+- DO NOT pick "${avoidMarket}" (${marketLabelsMap[avoidMarket]}) for this match.
+- Your tip_type MUST NOT be the same as your example thinking — actually analyse the match and pick the genuinely best market.
 - playerTips: EXACTLY 2 tips with REAL players currently at these clubs in ${currentSeason}.
 - bet_type MUST be one of the 10 allowed player markets listed above.
 - reasoning MUST reference specific form, matchup, or statistical data. Generic reasoning is NOT allowed.

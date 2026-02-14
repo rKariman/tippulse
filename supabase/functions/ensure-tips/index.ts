@@ -229,23 +229,33 @@ INSTRUCTIONS:
 7. NEVER mention "limited data" or "lack of information". Use your football knowledge confidently.
 
 8. Provide EXACTLY 2 PLAYER TIPS with REAL players CURRENTLY at these clubs in ${currentSeason}.
-   You MUST pick from ONLY these player betting markets:
-    - "anytime_goalscorer" (Anytime Goalscorer)
-    - "first_goalscorer" (First Goalscorer)
-    - "2_plus_goals" (2+ Goals)
-    - "player_assist" (Player to Assist)
-    - "over_under_shots" (Over/Under Shots)
-    - "shots_on_target" (Shots on Target)
-    - "over_under_passes" (Over/Under Passes)
-    - "over_under_tackles" (Over/Under Tackles)
-    - "player_yellow_card" (Player to Receive a Yellow Card)
-    - "goal_and_assist" (Goal + Assist combo)
+   You MUST pick from ONLY these player betting markets, listed from HIGHEST to LOWEST probability of winning:
+
+   HIGH PROBABILITY (prefer these — easier to hit):
+    - "shots_on_target" (Player 1+ Shots on Target) — ~55-65% hit rate for key attackers
+    - "over_under_shots" (Player Over 1.5 Shots) — ~50-60% hit rate
+    - "over_under_tackles" (Player Over 1.5 Tackles) — ~50-55% for defensive midfielders/fullbacks
+    - "over_under_passes" (Player Over X Passes) — ~50-55% for midfielders
+
+   MEDIUM PROBABILITY:
+    - "player_yellow_card" (Player to Receive a Yellow Card) — ~20-35% for aggressive players
+    - "player_assist" (Player to Assist) — ~15-25% for creative players
+
+   LOW PROBABILITY (use sparingly — only when very strong case):
+    - "anytime_goalscorer" (Anytime Goalscorer) — ~10-20% even for top strikers
+    - "first_goalscorer" (First Goalscorer) — ~5-10%
+    - "2_plus_goals" (2+ Goals) — ~3-8%
+    - "goal_and_assist" (Goal + Assist combo) — ~2-5%
+
+   CRITICAL: You MUST prioritize HIGH PROBABILITY markets. Only pick low-probability markets (goalscorer, 2+ goals, goal+assist) if you have exceptional evidence. Most tips should come from shots, tackles, passes, or cards.
+   Do NOT default to "anytime_goalscorer" — it is one of the hardest bets to win.
 
    For each player tip you MUST consider:
    - The player's recent form (goals, shots, assists, cards, minutes played)
    - The opponent's defensive weaknesses
    - The player's role and position
-   Pick the 2 STRONGEST, most confident player bets from the list above.
+   - The PROBABILITY of the bet hitting — favour high-probability markets
+   Pick the 2 STRONGEST, most likely-to-win player bets from the list above.
 
 Return ONLY valid JSON (no markdown):
 {

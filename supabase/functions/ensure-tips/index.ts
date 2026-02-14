@@ -173,6 +173,16 @@ serve(async (req) => {
     const currentMonth = new Date().getMonth() + 1;
     const currentSeason = currentMonth >= 7 ? `${currentYear}/${currentYear + 1}` : `${currentYear - 1}/${currentYear}`;
 
+    // Randomize a "do not use" market to force diversity across fixtures
+    const allMarkets = ["match_result", "double_chance", "btts", "over_under", "correct_score", "total_cards", "total_corners", "total_fouls", "half_time", "clean_sheet", "win_to_nil", "first_to_score", "handicap"];
+    const avoidMarket = allMarkets[Math.floor(Math.random() * allMarkets.length)];
+    const marketLabelsMap: Record<string, string> = {
+      match_result: "Match Result", double_chance: "Double Chance", btts: "Both Teams To Score",
+      over_under: "Over/Under Goals", correct_score: "Correct Score", total_cards: "Total Cards",
+      total_corners: "Total Corners", total_fouls: "Total Fouls", half_time: "Half-Time Result",
+      clean_sheet: "Clean Sheet", win_to_nil: "Win to Nil", first_to_score: "First to Score", handicap: "Handicap",
+    };
+
     const prompt = `You are a world-class football betting analyst with deep knowledge of every team, player, and league. Today's date is ${currentDate}. The current football season is ${currentSeason}.
 
 YOUR TASK: Use YOUR OWN knowledge of these teams, their current squads, recent performances, playing styles, managerial tactics, injury news, and historical tendencies to predict what will happen in this match. Do your own research from your training data — do not rely only on the stats below.
@@ -222,7 +232,9 @@ INSTRUCTIONS:
 
 3. Your tip_type must be one of: "match_result", "double_chance", "btts", "over_under", "correct_score", "total_cards", "total_corners", "total_fouls", "half_time", "clean_sheet", "win_to_nil", "first_to_score", "handicap".
 
-4. Pick the market where you see the STRONGEST edge based on your knowledge. CRITICAL: Do NOT default to corners or any single market. You MUST vary your picks — consider ALL 13 market categories equally. The example JSON below uses BTTS but that is just formatting; pick whichever market has the best edge for THIS specific match.
+4. Pick the market where you see the STRONGEST edge based on your knowledge.
+   DIVERSITY RULE: For THIS match, do NOT pick "${avoidMarket}" (${marketLabelsMap[avoidMarket]}). Choose from the remaining 12 markets.
+   You MUST consider ALL market categories — do not default to corners, BTTS, or any single market repeatedly. Each match should get the market that genuinely fits best.
 
 5. Confidence levels — be brutally honest:
    - "high" = you would bet your own money, strong evidence
@@ -307,7 +319,7 @@ Rules:
           { role: "system", content: "You are a football betting expert. Return only valid JSON." },
           { role: "user", content: prompt },
         ],
-        temperature: 0.7,
+        temperature: 0.9,
       }),
     });
 

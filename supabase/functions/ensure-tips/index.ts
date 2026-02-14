@@ -177,7 +177,12 @@ serve(async (req) => {
 
 YOUR TASK: Use YOUR OWN knowledge of these teams, their current squads, recent performances, playing styles, managerial tactics, injury news, and historical tendencies to predict what will happen in this match. Do your own research from your training data — do not rely only on the stats below.
 
-CRITICAL: All player references MUST be players CURRENTLY registered and playing for these teams in the ${currentSeason} season. Do NOT reference players from previous seasons or who have transferred away. If unsure, do NOT include them.
+CRITICAL SQUAD RULES:
+- All player references MUST be players CURRENTLY registered and playing for ${homeTeam} or ${awayTeam} in the ${currentSeason} season.
+- Do NOT reference players from previous seasons or who have transferred away.
+- Double-check EVERY player name: confirm they are on the CORRECT team's current roster. A player who once played for a team but now plays elsewhere MUST NOT be included.
+- If you are not 100% certain a player is currently at one of these two clubs, do NOT include them.
+- Common mistake: naming a player who transferred years ago. Verify against your knowledge of the ${currentSeason} squad lists.
 
 Match: ${homeTeam} vs ${awayTeam}
 League: ${league}

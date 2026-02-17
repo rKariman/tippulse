@@ -37,22 +37,27 @@ The following secrets must be configured in Lovable Cloud:
 |----------|-------------|
 | `API_FOOTBALL_KEY` | Your API-Football.com API key |
 | `SYNC_ADMIN_TOKEN` | Admin token for sync endpoints (choose a secure string) |
+| `OPENAI_API_KEY` | OpenAI API key for AI tip generation (`ensure-tips` function) |
 
 Optional:
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `MATCH_API_DEFAULT_LEAGUES` | Comma-separated league IDs | `39,2,135,140,78` |
+| `MATCH_DEFAULT_LEAGUE_IDS` | Comma-separated league IDs | `39,2,135,140,78` |
 
 ### League IDs (API-Football)
 
 - `39` - Premier League (England)
 - `2` - UEFA Champions League
+- `3` - UEFA Europa League
 - `135` - Serie A (Italy)
 - `140` - La Liga (Spain)
 - `78` - Bundesliga (Germany)
 - `61` - Ligue 1 (France)
 - `94` - Primeira Liga (Portugal)
-- `88` - Eredivisie (Netherlands)
+- `307` - Saudi Pro League
+- `45` - FA Cup (England)
+- `81` - DFB Pokal (Germany)
+- `143` - Copa del Rey (Spain)
 
 ---
 

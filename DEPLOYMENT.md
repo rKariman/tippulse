@@ -317,7 +317,6 @@ supabase functions deploy sync-fixtures
 supabase functions deploy sync-leagues
 supabase functions deploy sync-live
 supabase functions deploy ensure-tips
-supabase functions deploy generate-tips
 supabase functions deploy warm-tips-cache
 ```
 
@@ -327,7 +326,7 @@ supabase functions deploy warm-tips-cache
 # Set required secrets
 supabase secrets set API_FOOTBALL_KEY=your-api-key
 supabase secrets set SYNC_ADMIN_TOKEN=your-secure-token
-supabase secrets set FOOTBALL_DATA_API_KEY=your-football-data-key
+supabase secrets set OPENAI_API_KEY=your-openai-api-key
 supabase secrets set MATCH_DEFAULT_LEAGUE_IDS=39,2,135,140,78
 ```
 

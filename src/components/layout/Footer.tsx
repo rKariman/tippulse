@@ -14,10 +14,12 @@ export function Footer() {
             <span className="text-fluid-lg font-semibold text-white">GambleAware</span>
           </div>
           <p className="text-fluid-sm max-w-2xl mx-auto mb-4">
-            GambleAware.org aims to promote responsibility in gambling. They provide information to help you make informed decisions about your gambling.
+            GambleAware.org aims to promote responsibility in gambling. They provide information to help you make
+            informed decisions about your gambling.
           </p>
           <p className="text-fluid-sm text-ink-400 mb-2">
-            Call the National Gambling Helpline: <span className="text-white">0808 8020 133</span> 8am to midnight, 7 days a week.
+            Call the National Gambling Helpline: <span className="text-white">0808 8020 133</span> 8am to midnight, 7
+            days a week.
           </p>
           <p className="text-fluid-sm font-medium text-white mt-4">
             You must be 18 years old or over to use this site. Please bet responsibly.
@@ -29,7 +31,7 @@ export function Footer() {
           {/* Social icons */}
           <div className="flex items-center justify-center gap-4">
             <a
-              href="https://www.google.com"
+              href="https://www.x.com/TipPulse"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-ink-800 text-ink-400 hover:text-white hover:bg-brand-600 transition-all duration-200"
@@ -38,7 +40,7 @@ export function Footer() {
               <Twitter size={16} />
             </a>
             <a
-              href="https://www.google.com"
+              href="https://www.Tip_Pulse.t.me"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-ink-800 text-ink-400 hover:text-white hover:bg-brand-600 transition-all duration-200"
@@ -47,7 +49,7 @@ export function Footer() {
               <Send size={16} />
             </a>
             <a
-              href="https://www.google.com"
+              href="https://www.instagram.com/TipPulse"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-ink-800 text-ink-400 hover:text-white hover:bg-brand-600 transition-all duration-200"
@@ -56,7 +58,7 @@ export function Footer() {
               <Instagram size={16} />
             </a>
             <a
-              href="https://www.google.com"
+              href="mailto:TipPulse@gmail.com"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-ink-800 text-ink-400 hover:text-white hover:bg-brand-600 transition-all duration-200"
@@ -77,7 +79,7 @@ export function Footer() {
               <span className="text-white">Pulse</span>
             </span>
           </div>
-          
+
           <nav className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-fluid-sm">
             <Link to="/terms" className="hover:text-white transition-colors">
               Terms & Conditions
@@ -95,10 +97,8 @@ export function Footer() {
               Privacy Policy
             </Link>
           </nav>
-          
-          <p className="text-fluid-sm text-ink-500">
-            © {new Date().getFullYear()} TipPulse
-          </p>
+
+          <p className="text-fluid-sm text-ink-500">© {new Date().getFullYear()} TipPulse</p>
         </div>
       </div>
     </footer>

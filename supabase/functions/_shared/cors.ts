@@ -23,6 +23,15 @@ export function validateAdminToken(req: Request): boolean {
   return syncToken === expectedToken;
 }
 
+// Helper to get env vars with fallback names (for self-hosted Supabase where SUPABASE_* may be restricted)
+export function getSupabaseUrl(): string {
+  return Deno.env.get('SUPABASE_URL') || Deno.env.get('SB_URL') || '';
+}
+
+export function getSupabaseServiceRoleKey(): string {
+  return Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || Deno.env.get('SB_SERVICE_ROLE_KEY') || '';
+}
+
 export function validateCronToken(req: Request): boolean {
   // Check x-cron-token header
   const cronToken = req.headers.get('x-cron-token');
@@ -34,7 +43,7 @@ export function validateCronToken(req: Request): boolean {
   
   // Also accept service role key in Authorization header (for pg_cron)
   const authHeader = req.headers.get('Authorization');
-  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  const serviceRoleKey = getSupabaseServiceRoleKey();
   
   if (authHeader && serviceRoleKey) {
     const token = authHeader.replace('Bearer ', '');

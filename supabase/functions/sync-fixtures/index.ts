@@ -1,6 +1,6 @@
 /// <reference types="https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts" />
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.93.2';
-import { corsHeaders, handleCors, validateAdminToken } from '../_shared/cors.ts';
+import { corsHeaders, handleCors, validateAdminToken, getSupabaseUrl, getSupabaseServiceRoleKey } from '../_shared/cors.ts';
 import { createApiFootballProvider } from '../_shared/api-football-provider.ts';
 import { upsertFixture, logSyncRun } from '../_shared/upsert.ts';
 import type { SyncResult } from '../_shared/types.ts';
@@ -53,8 +53,8 @@ Deno.serve(async (req) => {
     }
 
     const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+      getSupabaseUrl(),
+      getSupabaseServiceRoleKey()
     );
 
     const provider = createApiFootballProvider(apiKey);
@@ -237,12 +237,12 @@ Deno.serve(async (req) => {
       console.log('[sync-fixtures] Triggering warm-tips-cache...');
       try {
         const warmResponse = await fetch(
-          `${Deno.env.get('SUPABASE_URL')}/functions/v1/warm-tips-cache`,
+          `${getSupabaseUrl()}/functions/v1/warm-tips-cache`,
           {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+              Authorization: `Bearer ${getSupabaseServiceRoleKey()}`,
             },
             body: JSON.stringify({ warmCache: true, cleanup: true }),
           }

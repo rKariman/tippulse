@@ -1,6 +1,6 @@
 /// <reference types="https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts" />
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.93.2';
-import { corsHeaders, handleCors, validateAdminToken, validateCronToken } from '../_shared/cors.ts';
+import { corsHeaders, handleCors, validateAdminToken, validateCronToken, getSupabaseUrl, getSupabaseServiceRoleKey } from '../_shared/cors.ts';
 import { createApiFootballProvider } from '../_shared/api-football-provider.ts';
 import { logSyncRun } from '../_shared/upsert.ts';
 import type { SyncResult } from '../_shared/types.ts';
@@ -59,8 +59,8 @@ Deno.serve(async (req) => {
     }
 
     const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+      getSupabaseUrl(),
+      getSupabaseServiceRoleKey()
     );
 
     const provider = createApiFootballProvider(apiKey);

@@ -15,7 +15,7 @@ import { useTodayFixturesForTips, useGenerateAITips } from "@/hooks/useTodayTips
 export default function HomePage() {
   // Fetch real data - today's and tomorrow's matches with auto-refresh for live scores
   const { data: realFixtures, isLoading: fixturesLoading } = useUpcomingFixtures({
-    limit: 10,
+    limit: 3,
     dateRange: "upcoming",
   });
   // Re-fetch fixtures every 30 seconds to get latest live scores from Supabase

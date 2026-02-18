@@ -1,6 +1,6 @@
 // sync-live: Updates live match status and scores with minimal API calls
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { corsHeaders, handleCors } from '../_shared/cors.ts';
+import { corsHeaders, handleCors, getSupabaseUrl, getSupabaseServiceRoleKey } from '../_shared/cors.ts';
 
 const API_FOOTBALL_BASE_URL = 'https://v3.football.api-sports.io';
 
@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
   const cronToken = req.headers.get('x-cron-token');
   const syncToken = req.headers.get('x-sync-token');
   const expectedToken = Deno.env.get('SYNC_ADMIN_TOKEN');
-  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  const serviceRoleKey = getSupabaseServiceRoleKey();
   const authHeader = req.headers.get('Authorization');
   
   const isAuthorized = 
@@ -79,8 +79,8 @@ Deno.serve(async (req) => {
     );
   }
 
-  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const supabaseUrl = getSupabaseUrl();
+  const supabaseServiceKey = getSupabaseServiceRoleKey();
   const apiFootballKey = Deno.env.get('API_FOOTBALL_KEY');
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey);

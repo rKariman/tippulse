@@ -330,6 +330,51 @@ supabase secrets set OPENAI_API_KEY=your-openai-api-key
 supabase secrets set MATCH_DEFAULT_LEAGUE_IDS=39,2,135,140,78
 ```
 
+### Alternative Secret Names (Self-Hosted Supabase)
+
+If your Supabase dashboard restricts setting secrets with `SUPABASE_*` prefixes,
+the edge functions support fallback names:
+
+| Standard Name | Fallback Name |
+|---|---|
+| `SUPABASE_URL` | `SB_URL` |
+| `SUPABASE_SERVICE_ROLE_KEY` | `SB_SERVICE_ROLE_KEY` |
+
+The functions check the standard name first, then fall back to the alternative.
+
+---
+
+## Database Schema Notes
+
+### Foreign Key Cascading
+
+All tip/preview tables use `ON DELETE CASCADE` referencing `fixtures`:
+- Deleting a fixture automatically removes its `match_tips`, `player_tips`, `ai_tips_cache`, `previews`, `tips`, and `preview_tips`.
+- Deleting a league or team sets the FK to NULL (does not cascade-delete fixtures).
+
+This means you can safely clean up old fixtures without running into FK constraint errors:
+
+```sql
+-- Delete all fixtures older than 30 days (tips cascade automatically)
+DELETE FROM fixtures WHERE kickoff_at < NOW() - INTERVAL '30 days';
+```
+
+### Required Tables
+
+The edge functions expect these tables to exist with the correct schema:
+
+| Table | Used By | Purpose |
+|---|---|---|
+| `leagues` | sync-today, sync-fixtures, sync-leagues | League data with `external_id`, `provider` |
+| `teams` | sync-today, sync-fixtures, sync-leagues | Team data with `external_id`, `provider`, `logo_url` |
+| `fixtures` | All sync functions, ensure-tips | Match data with `external_id`, `provider`, `phase`, `base_minute` |
+| `match_tips` | ensure-tips, warm-tips-cache | AI-generated match tips |
+| `player_tips` | ensure-tips, warm-tips-cache | AI-generated player tips |
+| `ai_tips_cache` | ensure-tips | Legacy tip cache |
+| `tip_generation_runs` | ensure-tips, warm-tips-cache | Generation audit log |
+| `sync_runs` | All sync functions | Sync audit log |
+| `admin_users` | RLS policies | Admin access control |
+
 ---
 
 ## Deployment Checklist
@@ -577,4 +622,4 @@ chmod 600 /var/www/tippulse/.env
 
 ---
 
-*Last updated: January 2026*
+*Last updated: February 2026*

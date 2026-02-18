@@ -1,6 +1,6 @@
 /// <reference types="https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts" />
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.93.2';
-import { corsHeaders, handleCors, validateAdminToken } from '../_shared/cors.ts';
+import { corsHeaders, handleCors, validateAdminToken, getSupabaseUrl, getSupabaseServiceRoleKey } from '../_shared/cors.ts';
 import { createApiFootballProvider } from '../_shared/api-football-provider.ts';
 import { upsertLeague, upsertTeam, logSyncRun } from '../_shared/upsert.ts';
 import type { SyncResult } from '../_shared/types.ts';
@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     // API-Football uses numeric league IDs. Popular leagues:
     // 39 = Premier League, 140 = La Liga, 135 = Serie A, 78 = Bundesliga, 2 = Champions League
-    const defaultLeagues = Deno.env.get('MATCH_API_DEFAULT_LEAGUES') || '39,2,135,140,78';
+    const defaultLeagues = Deno.env.get('MATCH_DEFAULT_LEAGUE_IDS') || '39,2,135,140,78';
     const leagueIds: string[] = body.leagueIds || defaultLeagues.split(',');
 
     const apiKey = Deno.env.get('API_FOOTBALL_KEY');
@@ -31,8 +31,8 @@ Deno.serve(async (req) => {
     }
 
     const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+      getSupabaseUrl(),
+      getSupabaseServiceRoleKey()
     );
 
     const provider = createApiFootballProvider(apiKey);

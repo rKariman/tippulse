@@ -31,7 +31,7 @@ export function Footer() {
           {/* Social icons */}
           <div className="flex items-center justify-center gap-4">
             <a
-              href="https://www.x.com/TipPulse"
+              href="https://x.com/tippulse"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-ink-800 text-ink-400 hover:text-white hover:bg-brand-600 transition-all duration-200"
@@ -40,7 +40,7 @@ export function Footer() {
               <Twitter size={16} />
             </a>
             <a
-              href="tg://resolve?domain=tip_pulse"
+              href="https://t.me/tip_pulse"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-ink-800 text-ink-400 hover:text-white hover:bg-brand-600 transition-all duration-200"
@@ -49,7 +49,7 @@ export function Footer() {
               <Send size={16} />
             </a>
             <a
-              href="https://www.instagram.com/TipPulse"
+              href="https://instagram.com/tippulse"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-ink-800 text-ink-400 hover:text-white hover:bg-brand-600 transition-all duration-200"
@@ -58,7 +58,7 @@ export function Footer() {
               <Instagram size={16} />
             </a>
             <a
-              href="mailto:TipPulse@gmail.com"
+              href="mailto:tippulse@gmail.com"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-ink-800 text-ink-400 hover:text-white hover:bg-brand-600 transition-all duration-200"

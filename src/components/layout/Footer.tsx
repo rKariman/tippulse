@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Twitter, Send, Instagram, Mail } from "lucide-react";
 
 export function Footer() {
   return (
@@ -21,6 +22,49 @@ export function Footer() {
           <p className="text-fluid-sm font-medium text-white mt-4">
             You must be 18 years old or over to use this site. Please bet responsibly.
           </p>
+
+          {/* Divider */}
+          <div className="w-24 h-px mx-auto mt-5 mb-4" style={{ backgroundColor: "rgb(100 116 139)" }} />
+
+          {/* Social icons */}
+          <div className="flex items-center justify-center gap-4">
+            <a
+              href="https://www.google.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-ink-800 text-ink-400 hover:text-white hover:bg-brand-600 transition-all duration-200"
+              aria-label="Twitter"
+            >
+              <Twitter size={16} />
+            </a>
+            <a
+              href="https://www.google.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-ink-800 text-ink-400 hover:text-white hover:bg-brand-600 transition-all duration-200"
+              aria-label="Telegram"
+            >
+              <Send size={16} />
+            </a>
+            <a
+              href="https://www.google.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-ink-800 text-ink-400 hover:text-white hover:bg-brand-600 transition-all duration-200"
+              aria-label="Instagram"
+            >
+              <Instagram size={16} />
+            </a>
+            <a
+              href="https://www.google.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-ink-800 text-ink-400 hover:text-white hover:bg-brand-600 transition-all duration-200"
+              aria-label="Email"
+            >
+              <Mail size={16} />
+            </a>
+          </div>
         </div>
       </div>
 

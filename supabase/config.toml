@@ -8,3 +8,7 @@ verify_jwt = false
 
 [functions.warm-tips-cache]
 verify_jwt = false
+
+[functions.validate-sync-token]
+verify_jwt = false
+

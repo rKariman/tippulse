@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, RefreshCw, Calendar, Shield, Zap } from "lucide-react";
+import { Loader2, RefreshCw, Calendar, Shield, Zap, Lock } from "lucide-react";
 import { FixtureDebugWidget } from "@/components/admin/FixtureDebugWidget";
 
 interface SyncRun {
@@ -79,15 +79,45 @@ export default function AdminSyncPage() {
     }
   };
 
-  const handleAuth = () => {
-    if (syncToken.length > 10) {
-      setIsAuthenticated(true);
-    } else {
+  const [authLoading, setAuthLoading] = useState(false);
+
+  const handleAuth = async () => {
+    if (!syncToken.trim()) {
       toast({
         title: "Invalid token",
         description: "Please enter a valid sync admin token.",
         variant: "destructive",
       });
+      return;
+    }
+    setAuthLoading(true);
+    try {
+      const response = await fetch(
+        `${supabaseUrl}/functions/v1/validate-sync-token`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: syncToken }),
+        }
+      );
+      const { valid } = await response.json();
+      if (valid) {
+        setIsAuthenticated(true);
+      } else {
+        toast({
+          title: "Invalid token",
+          description: "The token you entered is incorrect.",
+          variant: "destructive",
+        });
+      }
+    } catch {
+      toast({
+        title: "Authentication failed",
+        description: "Could not verify token. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setAuthLoading(false);
     }
   };
 
@@ -196,11 +226,16 @@ export default function AdminSyncPage() {
                   value={syncToken}
                   onChange={(e) => setSyncToken(e.target.value)}
                   placeholder="Enter your token"
-                  onKeyDown={(e) => e.key === "Enter" && handleAuth()}
+                  onKeyDown={(e) => e.key === "Enter" && !authLoading && handleAuth()}
                 />
               </div>
-              <Button onClick={handleAuth} className="w-full">
-                Authenticate
+              <Button onClick={handleAuth} className="w-full" disabled={authLoading}>
+                {authLoading ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Lock className="h-4 w-4 mr-2" />
+                )}
+                {authLoading ? "Verifying..." : "Authenticate"}
               </Button>
             </CardContent>
           </Card>

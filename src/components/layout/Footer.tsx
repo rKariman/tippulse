@@ -58,7 +58,7 @@ export function Footer() {
               <Instagram size={16} />
             </a>
             <a
-              href="mailto:tippulse@gmail.com"
+              href="mailto:tippulse90@gmail.com"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-ink-800 text-ink-400 hover:text-white hover:bg-brand-600 transition-all duration-200"

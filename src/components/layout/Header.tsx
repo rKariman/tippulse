@@ -26,7 +26,7 @@ export function Header() {
   const isTipsPage = location.pathname.startsWith("/tips");
 
   return (
-    <header className="sticky top-0 z-50 bg-surface shadow-soft">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-surface shadow-soft w-full">
       {/* Top bar */}
       <div className="header-strip">
         <div className="container flex items-center justify-between" style={{ height: 'clamp(3rem, 2.5rem + 2vw, 3.5rem)' }}>
